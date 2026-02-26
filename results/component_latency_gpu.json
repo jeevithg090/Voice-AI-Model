@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "timestamp_utc": "2026-02-22T04:58:50.364393+00:00",
+    "audio_path": "sample.wav",
+    "audio_seconds": 3.390125,
+    "runs": 3,
+    "warmup": 1,
+    "device": "cuda",
+    "torch_version": "2.10.0+rocm7.1",
+    "cuda_available": true,
+    "settings": {
+      "whisper_model": "openai/whisper-small",
+      "lid_model": "facebook/mms-lid-256",
+      "ollama_base_url": "http://localhost:11434",
+      "llm_model": "llama3.2:3b",
+      "tts_backend": "auto"
+    }
+  },
+  "components": {
+    "speech_preprocess": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 0.7309776666867643,
+        "min_ms": 0.7034970000177054,
+        "p50_ms": 0.7292630000392819,
+        "p95_ms": 0.7570820000069034,
+        "max_ms": 0.7601730000033058
+      },
+      "details": {
+        "output_samples_16k": 54242
+      }
+    },
+    "wad_energy": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 0.9062556667155756,
+        "min_ms": 0.8964160000459742,
+        "p50_ms": 0.9087800000315838,
+        "p95_ms": 0.9130919000654103,
+        "max_ms": 0.9135710000691688
+      },
+      "details": {
+        "threshold": 0.01,
+        "frame_ms": 20,
+        "speech_frames": 110
+      }
+    },
+    "speech_encoder_mimi": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 14.845352000027864,
+        "min_ms": 14.228531000071598,
+        "p50_ms": 14.451351999923645,
+        "p95_ms": 15.715690900071877,
+        "max_ms": 15.856173000088347
+      },
+      "details": {
+        "audio_codes_shape": [
+          1,
+          32,
+          43
+        ]
+      }
+    },
+    "language_detection_mms_lid": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 21.054921000010534,
+        "min_ms": 20.353191000026527,
+        "p50_ms": 20.96534800000427,
+        "p95_ms": 21.75813640000115,
+        "max_ms": 21.846224000000802
+      },
+      "details": {
+        "top_code": "tam",
+        "normalized_lang": "ta",
+        "confidence": 0.999
+      }
+    },
+    "stt_whisper": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 96.53099500004221,
+        "min_ms": 95.83436700017955,
+        "p50_ms": 96.07944799995494,
+        "p95_ms": 97.51919779998843,
+        "max_ms": 97.67916999999215
+      },
+      "details": {
+        "transcript_preview": "This is Tamil Piper Sodhanai Kural."
+      }
+    },
+    "emergency_detection": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 15.640456000104072,
+        "min_ms": 15.21078500013573,
+        "p50_ms": 15.469867000092563,
+        "p95_ms": 16.163631100084785,
+        "max_ms": 16.24071600008392
+      },
+      "details": {
+        "emergency_probability": 0.0
+      }
+    },
+    "llm_ollama": {
+      "error": "HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x78628970d940>: Failed to establish a new connection: [Errno 111] Connection refused'))"
+    },
+    "tts": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 277.9923773333242,
+        "min_ms": 256.0178259998338,
+        "p50_ms": 263.6329229999319,
+        "p95_ms": 309.2570370001795,
+        "max_ms": 314.326383000207
+      },
+      "details": {
+        "language": "en",
+        "audio_bytes_last_run": 634732
+      }
+    }
+  }
+}

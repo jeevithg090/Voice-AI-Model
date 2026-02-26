@@ -1,0 +1,188 @@
+{
+  "meta": {
+    "timestamp_utc": "2026-02-22T05:16:55.452613+00:00",
+    "audio_path": "sample.wav",
+    "audio_seconds": 3.390125,
+    "runs": 3,
+    "warmup": 1,
+    "device": "cuda",
+    "torch": "2.10.0+rocm7.1",
+    "cuda_available": true,
+    "models": {
+      "whisper": "openai/whisper-small",
+      "lid": "facebook/mms-lid-256",
+      "emergency_classifier": "models/emergency_classifier.pt",
+      "tts_backend": "auto",
+      "piper_models_dir": "src/tts/piper_models"
+    }
+  },
+  "components": {
+    "speech_preprocess": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 0.7381389999257711,
+        "min_ms": 0.7145449999370612,
+        "p50_ms": 0.746864000120695,
+        "p95_ms": 0.7523935997596709,
+        "max_ms": 0.7530079997195571
+      },
+      "details": {
+        "output_samples_16k": 54242
+      }
+    },
+    "wad_energy": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 0.9187453333652229,
+        "min_ms": 0.9051130000443663,
+        "p50_ms": 0.9126840000135417,
+        "p95_ms": 0.9358635000353388,
+        "max_ms": 0.9384390000377607
+      },
+      "details": {
+        "threshold": 0.01,
+        "frame_ms": 20,
+        "speech_frames": 110
+      }
+    },
+    "speech_encoder_mimi": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 14.735610333445948,
+        "min_ms": 14.058298000236391,
+        "p50_ms": 14.23922499998298,
+        "p95_ms": 15.742299700104923,
+        "max_ms": 15.909308000118472
+      },
+      "details": {
+        "audio_codes_shape": [
+          1,
+          32,
+          43
+        ]
+      }
+    },
+    "emergency_detection": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 15.15828066673445,
+        "min_ms": 15.083593999861478,
+        "p50_ms": 15.16698700015695,
+        "p95_ms": 15.218533600182127,
+        "max_ms": 15.224261000184924
+      },
+      "details": {
+        "emergency_probability": 1e-06
+      }
+    },
+    "language_detection_mms_lid": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 21.175165666591056,
+        "min_ms": 20.303641999817046,
+        "p50_ms": 20.75234400035697,
+        "p95_ms": 22.297794299674933,
+        "max_ms": 22.46951099959915
+      },
+      "details": {
+        "top_code": "tam",
+        "confidence": 0.998952
+      }
+    },
+    "stt_whisper": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 99.62511466649933,
+        "min_ms": 98.07563300000766,
+        "p50_ms": 98.27115299958677,
+        "p95_ms": 102.10281749987189,
+        "max_ms": 102.52855799990357
+      },
+      "details": {
+        "transcript_preview": "This is Tamil Piper Sodhanai Kural."
+      }
+    }
+  },
+  "tts_by_language": {
+    "en": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 251.03831699986281,
+        "min_ms": 241.01255499999752,
+        "p50_ms": 254.29293299976052,
+        "p95_ms": 257.45780999982344,
+        "max_ms": 257.80946299983043
+      },
+      "details": {
+        "expected_engine": "piper",
+        "routed_engine": "edge",
+        "piper_model_present": false,
+        "audio_bytes_last_run": 535020
+      }
+    },
+    "hi": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 509.5147793331307,
+        "min_ms": 318.4094689995618,
+        "p50_ms": 599.5927929998288,
+        "p95_ms": 609.4471476999843,
+        "max_ms": 610.5420760000015
+      },
+      "details": {
+        "expected_engine": "piper",
+        "routed_engine": "edge",
+        "piper_model_present": false,
+        "audio_bytes_last_run": 637164
+      }
+    },
+    "te": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 374.22252699995323,
+        "min_ms": 248.81133799999589,
+        "p50_ms": 300.4850659999647,
+        "p95_ms": 546.0825658999056,
+        "max_ms": 573.371176999899
+      },
+      "details": {
+        "expected_engine": "piper",
+        "routed_engine": "edge",
+        "piper_model_present": false,
+        "audio_bytes_last_run": 590956
+      }
+    },
+    "ta": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 1623.4120036665445,
+        "min_ms": 1487.5766959999055,
+        "p50_ms": 1566.4226569997481,
+        "p95_ms": 1791.2552578999566,
+        "max_ms": 1816.2366579999798
+      },
+      "details": {
+        "expected_engine": "piper",
+        "routed_engine": "piper",
+        "piper_model_present": true,
+        "audio_bytes_last_run": 289836
+      }
+    },
+    "kn": {
+      "latency_ms": {
+        "count": 3.0,
+        "avg_ms": 317.84535366675,
+        "min_ms": 213.8040159998127,
+        "p50_ms": 270.96881000034045,
+        "p95_ms": 448.9837925001211,
+        "max_ms": 468.76323500009676
+      },
+      "details": {
+        "expected_engine": "edge",
+        "routed_engine": "edge",
+        "piper_model_present": false,
+        "audio_bytes_last_run": 539884
+      }
+    }
+  }
+}

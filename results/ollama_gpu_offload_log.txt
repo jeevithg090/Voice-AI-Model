@@ -1,0 +1,12 @@
+Feb 22 05:18:16 7 ollama[14332]: time=2026-02-22T05:18:16.704Z level=INFO source=device.go:240 msg="model weights" device=ROCm0 size="1.9 GiB"
+Feb 22 05:18:16 7 ollama[14332]: time=2026-02-22T05:18:16.704Z level=INFO source=device.go:251 msg="kv cache" device=ROCm0 size="14.0 GiB"
+Feb 22 05:18:16 7 ollama[14332]: time=2026-02-22T05:18:16.704Z level=INFO source=device.go:262 msg="compute graph" device=ROCm0 size="6.3 GiB"
+Feb 22 05:18:18 7 ollama[14332]: llama_model_load_from_file_impl: using device ROCm0 (AMD Instinct MI300X VF) (0000:83:00.0) - 196002 MiB free
+Feb 22 05:18:18 7 ollama[14332]: load_tensors: offloading 28 repeating layers to GPU
+Feb 22 05:18:18 7 ollama[14332]: load_tensors: offloading output layer to GPU
+Feb 22 05:18:18 7 ollama[14332]: load_tensors: offloaded 29/29 layers to GPU
+Feb 22 05:18:18 7 ollama[14332]: load_tensors:        ROCm0 model buffer size =  1918.35 MiB
+Feb 22 05:18:18 7 ollama[14332]: llama_kv_cache:      ROCm0 KV buffer size = 14336.00 MiB
+Feb 22 05:18:19 7 ollama[14332]: llama_context:      ROCm0 compute buffer size =   408.01 MiB
+Feb 22 05:18:19 7 ollama[14332]: time=2026-02-22T05:18:19.116Z level=INFO source=server.go:1388 msg="llama runner started in 2.41 seconds"
+Feb 22 05:18:19 7 ollama[14332]: time=2026-02-22T05:18:19.116Z level=INFO source=server.go:1388 msg="llama runner started in 2.41 seconds"
