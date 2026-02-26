@@ -1,0 +1,12 @@
+{
+  "offer_status": 200,
+  "answer_type": "answer",
+  "ice_final": "completed",
+  "ice_states": [
+    "checking",
+    "completed",
+    "closed"
+  ],
+  "inbound_audio_track": true,
+  "connected": true
+}

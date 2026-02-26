@@ -1,0 +1,128 @@
+# =============================================================================
+# Solvathon Layer1 - Docker Compose for Development/Testing
+# Optimized for DigitalOcean MI300X GPU Droplet
+# =============================================================================
+# 
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d
+#
+# Features:
+#   - No nginx (direct HTTP access on port 8080)
+#   - No Twilio integration
+#   - Redis internal only (not exposed externally)
+#   - Ollama internal only (not exposed externally)
+#   - AMD ROCm GPU support for MI300X
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ===========================================================================
+  # Main Application
+  # ===========================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "src.realtime.signaling_server"]
+    container_name: solvathon_app
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PYTHONPATH=/app
+      - HF_HOME=${HF_HOME:-/root/.cache/huggingface}
+      - TORCH_HOME=${TORCH_HOME:-/root/.cache/torch}
+    ports:
+      - "8080:8080"
+    volumes:
+      # Model files
+      - ./models:/app/models
+      # TTS model files
+      - ./src/tts/piper_models:/app/src/tts/piper_models
+      # HuggingFace cache (persist downloaded models)
+      - ${HF_CACHE_DIR:-hf_cache}:/root/.cache/huggingface
+      # Torch cache (persist compiled kernels / model artifacts)
+      - ${TORCH_CACHE_DIR:-torch_cache}:/root/.cache/torch
+    # AMD ROCm GPU Configuration for MI300X
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+    security_opt:
+      - seccomp=unconfined
+    depends_on:
+      ollama:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # Models take time to load
+
+  # ===========================================================================
+  # Ollama LLM Server (AMD ROCm)
+  # ===========================================================================
+  ollama:
+    image: ollama/ollama:rocm
+    container_name: solvathon_ollama
+    # NOT exposed externally for security
+    # ports:
+    #   - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # AMD ROCm GPU Configuration
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================================================
+  # Redis (Session Storage)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: solvathon_redis
+    # NOT exposed externally for security
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# =============================================================================
+# Persistent Volumes
+# =============================================================================
+volumes:
+  ollama_data:
+    name: solvathon_ollama_data
+  redis_data:
+    name: solvathon_redis_data
+  hf_cache:
+    name: solvathon_hf_cache
+  torch_cache:
+    name: solvathon_torch_cache

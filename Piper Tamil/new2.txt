@@ -1,0 +1,54 @@
+NFO:__main__:Exported model to /workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/latest_test.onnx
+-rw-r--r-- 1 root root 61M Feb 12 19:04 /workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/latest_test.onnx
+root@rocm-7-1-software-gpu-mi300x1-192gb-devcloud-atl1:~# docker exec -it rocm bash -lc '
+RUN_ROOT=/workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium
+cd /workspace/piper_tamil/piper1-gpl
+source .venv/bin/activate
+
+printf "வணக்கம். இது ஒரு சோதனை.\n" | python -m piper --model "$RUN_ROOT/latest_test.onnx" --output_file "$RUN_ROOT/test_1.wav"
+printf "இன்று சென்னை நகரில் மழை பெய்யும் வாய்ப்பு உள்ளது.\n" | python -m piper --model "$RUN_ROOT/latest_test.onnx" --output_file "$RUN_ROOT/test_2.wav"
+printf "என் தொலைபேசி எண் ஒன்பது எட்டு ஏழு ஆறு ஐந்து நான்கு மூன்று இரண்டு ஒன்று.\n" | python -m piper --model "$RUN_ROOT/latest_test.onnx" --output_file "$RUN_ROOT/test_3.wav"
+
+ls -lh "$RUN_ROOT"/test_*.wav
+'
+2026-02-12 19:05:21.866424295 [W:onnxruntime:Default, device_discovery.cc:211 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:91 ReadFileContents Failed to open file: "/sys/class/drm/card5/device/vendor"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 255, in <module>
+    main()
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 149, in main
+    voice = PiperVoice.load(model_path, use_cuda=args.cuda)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/voice.py", line 144, in load
+    with open(config_path, "r", encoding="utf-8") as config_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/latest_test.onnx.json'
+2026-02-12 19:05:22.037869702 [W:onnxruntime:Default, device_discovery.cc:211 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:91 ReadFileContents Failed to open file: "/sys/class/drm/card5/device/vendor"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 255, in <module>
+    main()
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 149, in main
+    voice = PiperVoice.load(model_path, use_cuda=args.cuda)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/voice.py", line 144, in load
+    with open(config_path, "r", encoding="utf-8") as config_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/latest_test.onnx.json'
+2026-02-12 19:05:22.220340813 [W:onnxruntime:Default, device_discovery.cc:211 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:91 ReadFileContents Failed to open file: "/sys/class/drm/card5/device/vendor"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 255, in <module>
+    main()
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/__main__.py", line 149, in main
+    voice = PiperVoice.load(model_path, use_cuda=args.cuda)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/voice.py", line 144, in load
+    with open(config_path, "r", encoding="utf-8") as config_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/latest_test.onnx.json'
+ls: cannot access '/workspace/piper_tamil/runs/ta_IN-iitm-female-s1-medium/test_*.wav': No such file or directory
+root@rocm-7-1-software-gpu-mi300x1-192gb-devcloud-atl1:~# 

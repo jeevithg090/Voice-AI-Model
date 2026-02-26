@@ -1,0 +1,61 @@
+/Users/jeevithg/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+
+[93m🚀 Starting Comprehensive LLM Feature Tests[0m
+
+[96m============================================================
+🧪 Checking Infrastructure
+============================================================[0m
+[92m   ✅ Redis is running and accessible[0m
+[92m   ✅ Ollama is running. Models found: 2[0m
+[92m   ✅ All required models (llama3.2:1b, nomic-embed-text) present[0m
+
+[96m============================================================
+🧪 Testing Ollama Client Module
+============================================================[0m
+📂 Loaded 2 cache entries from semantic_cache.json
+[92m   ✅ Embedding generated (dim: 768)[0m
+[92m   ✅ Chat response received: Hi.[0m
+
+[96m============================================================
+🧪 Testing Semantic Cache
+============================================================[0m
+🗑️  Cache cleared
+[92m   ✅ Entry added to cache[0m
+[92m   ✅ Cache hit successful[0m
+🗑️  Cache cleared
+
+[96m============================================================
+🧪 Testing Redis Context
+============================================================[0m
+[92m   ✅ Session created: 6dbff2e5[0m
+[92m   ✅ History preserved correctly[0m
+[92m   ✅ Session cleared successfully[0m
+
+[96m============================================================
+🧪 Testing Filler Manager
+============================================================[0m
+[92m   ✅ English filler: let me think[0m
+[92m   ✅ Hindi filler: एक मिनट[0m
+[91m   ❌ Prefix generation failed for long process time[0m
+
+[96m============================================================
+🧪 Testing Full Embedding Agent Pipeline
+============================================================[0m
+   ℹ️  Processing prompt: 'I have a headache and I am 30 years old.'
+[92m   ✅ Pipeline finished in 0.21s[0m
+   ℹ️  Session ID: 1ba28542
+   ℹ️  Response: நீ என்ன? (How are you?) 
+
+ இருக்கிறதே, உங்கள் பெயர் மாணவர் அல்ல என்று நீங்கள் கூறியுள்ளோம். 
+
+ தற்போதைய உடல் விளக்கம்: 
+ நான் இருக்கும் அறிகுறிகள்:
+ 
+ - ஆபத்தியான உணவை எடுத்துக்காட்டி
+ - முழுநேர நீங்கள் ஒரு பிரிவ
+[91m   ❌ Full pipeline test error: 'filler_audio'[0m
+
+[96m============================================================
+[91m⚠️  2 tests failed. Check logs above.[0m
+============================================================[0m

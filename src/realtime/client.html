@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solvathon AI Call Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #0b1422;
+      --bg-2: #0e2138;
+      --panel: #111b2b;
+      --panel-2: #0f1a2a;
+      --text: #e9f0ff;
+      --muted: #9fb1cc;
+      --accent: #32d4a7;
+      --accent-2: #f0b35c;
+      --danger: #ff6b6b;
+      --border: rgba(255, 255, 255, 0.08);
+      --glow: rgba(50, 212, 167, 0.35);
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% -10%, #1a3760 0%, transparent 60%),
+                  radial-gradient(900px 700px at 120% 10%, #1c2846 0%, transparent 55%),
+                  linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(50, 212, 167, 0.16);
+      border: 1px solid rgba(50, 212, 167, 0.45);
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .panel {
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select, button, input {
+      font-family: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(10, 18, 30, 0.8);
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    select:focus, button:focus, input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(50, 212, 167, 0.2);
+      border-color: rgba(50, 212, 167, 0.5);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #32d4a7, #2aa6d1);
+      color: #041321;
+      border: none;
+    }
+
+    button.ghost {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    button.danger {
+      background: rgba(255, 107, 107, 0.16);
+      border-color: rgba(255, 107, 107, 0.5);
+      color: #ffc7c7;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .pill[data-mode="ok"] {
+      border-color: rgba(50, 212, 167, 0.6);
+      color: var(--accent);
+      background: rgba(50, 212, 167, 0.12);
+    }
+
+    .pill[data-mode="warn"] {
+      border-color: rgba(240, 179, 92, 0.7);
+      color: var(--accent-2);
+      background: rgba(240, 179, 92, 0.12);
+    }
+
+    .pill[data-mode="bad"] {
+      border-color: rgba(255, 107, 107, 0.7);
+      color: var(--danger);
+      background: rgba(255, 107, 107, 0.12);
+    }
+
+    .meter {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #32d4a7, #f0b35c, #ff6b6b);
+      transition: width 0.1s ease;
+    }
+
+    .log {
+      background: rgba(5, 10, 18, 0.7);
+      border-radius: 12px;
+      padding: 12px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: #cbd6f2;
+      border: 1px solid var(--border);
+    }
+
+    .log div + div { margin-top: 6px; }
+
+    .audio-panel audio {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .warn-banner {
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.4);
+      color: #ffd0d0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    @media (max-width: 960px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title">
+        <span class="badge">AI Call Agent</span>
+        <div>
+          <h1>Solvathon Voice Ops</h1>
+          <div class="sub">Real‑time multilingual emergency response pipeline</div>
+        </div>
+      </div>
+      <div class="status-row">
+        <span class="pill" id="status-server" data-mode="warn">Server: unknown</span>
+        <span class="pill" id="status-rtc">Link: idle</span>
+        <span class="pill" id="status-mic">Mic: off</span>
+      </div>
+    </header>
+
+    <section class="panel controls">
+      <div class="warn-banner" id="mic-warning">
+        Microphone access requires HTTPS or localhost. Use the SSH tunnel and open
+        <strong>http://localhost:PORT/client</strong> or the droplet IP for mic access.
+      </div>
+
+      <h2>Call Control</h2>
+      <div class="row">
+        <label for="backendUrl">Backend</label>
+        <input id="backendUrl" type="text" placeholder="http://165.245.140.34 or localhost:8081" />
+      </div>
+
+      <div class="row">
+        <label for="language">Language</label>
+        <select id="language">
+          <option value="auto">Auto‑detect (LID)</option>
+          <option value="eng">English</option>
+          <option value="hin">Hindi</option>
+          <option value="tel">Telugu</option>
+          <option value="tam">Tamil</option>
+          <option value="kan">Kannada</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="connectionMode">Connection</label>
+        <select id="connectionMode">
+          <option value="ws">WebSocket (stable)</option>
+          <option value="webrtc">WebRTC (direct)</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <button class="primary" id="btnStart">Start Call</button>
+        <button class="danger" id="btnStop" disabled>Hang Up</button>
+        <button class="ghost" id="btnMute" disabled>Mute Mic</button>
+        <button class="ghost" id="btnHealth">Check Server</button>
+      </div>
+
+      <div class="row">
+        <div style="flex: 1;">
+          <label>Mic Level</label>
+          <div class="meter">
+            <div class="meter-fill" id="micLevel"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="note">
+          Speak naturally. The agent streams your audio to the backend, runs LID + ASR + LLM,
+          and streams TTS audio back in real time.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel audio-panel">
+      <h2>Live Audio</h2>
+      <div class="note">Remote audio output from the AI agent.</div>
+      <audio id="remoteAudio" autoplay playsinline></audio>
+      <div class="note" style="margin-top: 12px;">Logs</div>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <script>
+    const statusServer = document.getElementById("status-server");
+    const statusRtc = document.getElementById("status-rtc");
+    const statusMic = document.getElementById("status-mic");
+    const btnStart = document.getElementById("btnStart");
+    const btnStop = document.getElementById("btnStop");
+    const btnMute = document.getElementById("btnMute");
+    const btnHealth = document.getElementById("btnHealth");
+    const languageSelect = document.getElementById("language");
+    const connectionSelect = document.getElementById("connectionMode");
+    const backendInput = document.getElementById("backendUrl");
+    const remoteAudio = document.getElementById("remoteAudio");
+    const logEl = document.getElementById("log");
+    const micLevel = document.getElementById("micLevel");
+    const micWarning = document.getElementById("mic-warning");
+
+    const ICE_SERVERS = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ];
+
+    let pc = null;
+    let ws = null;
+    let localStream = null;
+    let analyser = null;
+    let micMuted = false;
+    let meterFrame = null;
+    let meterCtx = null;
+    let audioCtx = null;
+    let micSource = null;
+    let micProcessor = null;
+    let micSink = null;
+    let playheadTime = 0;
+    let sendBuffer = [];
+    let activeMode = null;
+
+    const params = new URLSearchParams(window.location.search);
+    const storedBackend = localStorage.getItem("backendUrl");
+    const defaultBackend = params.get("backend") || storedBackend || window.location.origin;
+    backendInput.value = defaultBackend;
+
+    function log(message) {
+      const entry = document.createElement("div");
+      const ts = new Date().toLocaleTimeString();
+      entry.textContent = `[${ts}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setPill(el, text, mode) {
+      el.textContent = text;
+      if (mode) el.dataset.mode = mode;
+      else el.removeAttribute("data-mode");
+    }
+
+    function normalizeBackendUrl(raw) {
+      let url = (raw || "").trim();
+      if (!url) {
+        url = window.location.origin;
+      }
+      if (!/^https?:\/\//i.test(url)) {
+        url = `${window.location.protocol}//${url}`;
+      }
+      return url.replace(/\/+$/, "");
+    }
+
+    function getBackendUrl() {
+      return normalizeBackendUrl(backendInput.value);
+    }
+
+    function getWsBaseUrl() {
+      return getBackendUrl().replace(/^http/i, "ws");
+    }
+
+    backendInput.addEventListener("change", () => {
+      const normalized = getBackendUrl();
+      backendInput.value = normalized;
+      localStorage.setItem("backendUrl", normalized);
+      log(`Backend set to ${normalized}`);
+    });
+
+    function showMicWarning() {
+      const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      if (window.location.protocol !== "https:" && !isLocalhost) {
+        micWarning.style.display = "block";
+      }
+    }
+
+    async function checkServer() {
+      try {
+        const res = await fetch(`${getBackendUrl()}/healthz`);
+        const data = await res.json();
+        setPill(statusServer, `Server: ${data.status}`, data.status === "ok" ? "ok" : "warn");
+        log(`Health OK • device=${data.device} • tts=${data.tts_backend}`);
+      } catch (err) {
+        setPill(statusServer, "Server: offline", "bad");
+        log("Health check failed");
+      }
+    }
+
+    function startMeter(stream, ctxOverride) {
+      if (meterFrame) cancelAnimationFrame(meterFrame);
+      if (meterCtx && meterCtx !== audioCtx) {
+        meterCtx.close().catch(() => {});
+      }
+
+      meterCtx = ctxOverride || new (window.AudioContext || window.webkitAudioContext)();
+      const source = meterCtx.createMediaStreamSource(stream);
+      analyser = meterCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const level = Math.min(100, Math.round((avg / 255) * 100));
+        micLevel.style.width = `${level}%`;
+        meterFrame = requestAnimationFrame(tick);
+      };
+      tick();
+    }
+
+    function stopMeter() {
+      if (meterFrame) cancelAnimationFrame(meterFrame);
+      micLevel.style.width = "0%";
+      analyser = null;
+      if (meterCtx && meterCtx !== audioCtx) {
+        meterCtx.close().catch(() => {});
+      }
+      meterCtx = null;
+    }
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function downsampleBuffer(buffer, inputRate, outputRate) {
+      if (outputRate >= inputRate) return buffer;
+      const ratio = inputRate / outputRate;
+      const newLength = Math.round(buffer.length / ratio);
+      const result = new Float32Array(newLength);
+      let offset = 0;
+      for (let i = 0; i < newLength; i++) {
+        const nextOffset = Math.round((i + 1) * ratio);
+        let sum = 0;
+        let count = 0;
+        for (let j = offset; j < nextOffset && j < buffer.length; j++) {
+          sum += buffer[j];
+          count++;
+        }
+        result[i] = count ? sum / count : 0;
+        offset = nextOffset;
+      }
+      return result;
+    }
+
+    function linearToMuLaw(sample) {
+      const BIAS = 0x84;
+      const CLIP = 32635;
+      let sign = 0;
+      let pcm = Math.round(sample * 32767);
+      if (pcm < 0) {
+        sign = 0x80;
+        pcm = -pcm;
+      }
+      if (pcm > CLIP) pcm = CLIP;
+      pcm += BIAS;
+
+      let exponent = 7;
+      for (let expMask = 0x4000; (pcm & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+      const mantissa = (pcm >> ((exponent === 0) ? 4 : (exponent + 3))) & 0x0f;
+      return (~(sign | (exponent << 4) | mantissa)) & 0xff;
+    }
+
+    function muLawToLinear(byte) {
+      const BIAS = 0x84;
+      byte = ~byte;
+      const sign = (byte & 0x80) ? -1 : 1;
+      const exponent = (byte >> 4) & 0x07;
+      const mantissa = byte & 0x0f;
+      const magnitude = ((mantissa << 3) + BIAS) << exponent;
+      return sign * (magnitude - BIAS);
+    }
+
+    function encodeMulawBase64(samples) {
+      const bytes = new Uint8Array(samples.length);
+      for (let i = 0; i < samples.length; i++) {
+        bytes[i] = linearToMuLaw(samples[i]);
+      }
+      let binary = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function decodeMulawBase64(payload) {
+      const binary = atob(payload);
+      const len = binary.length;
+      const pcm = new Float32Array(len);
+      for (let i = 0; i < len; i++) {
+        const byte = binary.charCodeAt(i);
+        pcm[i] = muLawToLinear(byte) / 32768;
+      }
+      return pcm;
+    }
+
+    function playMulawPayload(payload) {
+      const ctx = ensureAudioContext();
+      const pcm = decodeMulawBase64(payload);
+      const buffer = ctx.createBuffer(1, pcm.length, 8000);
+      buffer.getChannelData(0).set(pcm);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      if (playheadTime < ctx.currentTime) {
+        playheadTime = ctx.currentTime + 0.05;
+      }
+      source.start(playheadTime);
+      playheadTime += buffer.duration;
+    }
+
+    async function waitForIceGathering(pc) {
+      if (pc.iceGatheringState === "complete") return;
+      await new Promise((resolve) => {
+        const check = () => {
+          if (pc.iceGatheringState === "complete") {
+            pc.removeEventListener("icegatheringstatechange", check);
+            resolve();
+          }
+        };
+        pc.addEventListener("icegatheringstatechange", check);
+      });
+    }
+
+    async function startCall() {
+      const mode = connectionSelect.value;
+      if (mode === "ws") {
+        return startWsCall();
+      }
+      return startRtcCall();
+    }
+
+    async function startRtcCall() {
+      if (pc) return;
+      activeMode = "webrtc";
+      setPill(statusRtc, "Link: webrtc starting", "warn");
+      log("Starting WebRTC call...");
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+        setPill(statusMic, "Mic: live", "ok");
+        startMeter(localStream);
+      } catch (err) {
+        setPill(statusMic, "Mic: blocked", "bad");
+        log("Microphone access denied");
+        return;
+      }
+
+      pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+      const remoteStream = new MediaStream();
+      remoteAudio.srcObject = remoteStream;
+
+      pc.ontrack = (event) => {
+        remoteStream.addTrack(event.track);
+        remoteAudio.play().catch(() => {});
+        log("Receiving remote audio");
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        if (state === "connected") {
+          setPill(statusRtc, "Link: webrtc connected", "ok");
+          log("RTC connected");
+        } else if (["failed", "disconnected"].includes(state)) {
+          setPill(statusRtc, `Link: webrtc ${state}`, "bad");
+          log(`RTC ${state}`);
+        } else {
+          setPill(statusRtc, `Link: webrtc ${state}`, "warn");
+        }
+      };
+
+      const offer = await pc.createOffer({ offerToReceiveAudio: true });
+      await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+
+      const language = languageSelect.value;
+      const payload = {
+        sdp: pc.localDescription.sdp,
+        type: pc.localDescription.type,
+        language: language,
+        auto_detect: language === "auto"
+      };
+
+      const response = await fetch(`${getBackendUrl()}/offer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error("Offer failed");
+      }
+
+      const answer = await response.json();
+      await pc.setRemoteDescription(answer);
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnMute.disabled = false;
+      log(`WebRTC call started (lang=${language})`);
+    }
+
+    function stopRtcCall() {
+      if (!pc) return;
+      log("Ending WebRTC call...");
+      pc.getSenders().forEach((sender) => sender.track && sender.track.stop());
+      pc.close();
+      pc = null;
+
+      if (localStream) {
+        localStream.getTracks().forEach((t) => t.stop());
+        localStream = null;
+      }
+      stopMeter();
+      remoteAudio.srcObject = null;
+
+      setPill(statusRtc, "RTC: idle");
+      setPill(statusMic, "Mic: off");
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnMute.disabled = true;
+      micMuted = false;
+      btnMute.textContent = "Mute Mic";
+      activeMode = null;
+    }
+
+    async function startWsCall() {
+      if (ws) return;
+      activeMode = "ws";
+      setPill(statusRtc, "Link: ws connecting", "warn");
+      log("Starting WebSocket call...");
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+        setPill(statusMic, "Mic: live", "ok");
+        const ctx = ensureAudioContext();
+        await ctx.resume();
+        startMeter(localStream, ctx);
+      } catch (err) {
+        setPill(statusMic, "Mic: blocked", "bad");
+        log("Microphone access denied");
+        return;
+      }
+
+      ws = new WebSocket(`${getWsBaseUrl()}/media-stream`);
+      const language = languageSelect.value;
+
+      ws.onopen = async () => {
+        setPill(statusRtc, "Link: ws connected", "ok");
+        ws.send(JSON.stringify({ event: "start", start: { customParameters: { language } } }));
+        log(`WebSocket call started (lang=${language})`);
+
+        const ctx = ensureAudioContext();
+        micSource = ctx.createMediaStreamSource(localStream);
+        micProcessor = ctx.createScriptProcessor(4096, 1, 1);
+        micSource.connect(micProcessor);
+
+        micSink = ctx.createGain();
+        micSink.gain.value = 0;
+        micProcessor.connect(micSink);
+        micSink.connect(ctx.destination);
+
+        micProcessor.onaudioprocess = (e) => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+          const input = e.inputBuffer.getChannelData(0);
+          const downsampled = downsampleBuffer(input, ctx.sampleRate, 8000);
+          for (let i = 0; i < downsampled.length; i++) {
+            sendBuffer.push(downsampled[i]);
+          }
+          while (sendBuffer.length >= 160) {
+            const frame = sendBuffer.slice(0, 160);
+            sendBuffer = sendBuffer.slice(160);
+            const payload = encodeMulawBase64(frame);
+            ws.send(JSON.stringify({ event: "media", media: { payload } }));
+          }
+        };
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          if (data.event === "media" && data.media && data.media.payload) {
+            playMulawPayload(data.media.payload);
+          }
+        } catch (err) {
+          log("WebSocket message parse error");
+        }
+      };
+
+      ws.onclose = () => {
+        log("WebSocket disconnected");
+        setPill(statusRtc, "Link: ws disconnected", "bad");
+      };
+
+      ws.onerror = () => {
+        log("WebSocket error");
+        setPill(statusRtc, "Link: ws error", "bad");
+      };
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnMute.disabled = false;
+    }
+
+    function stopWsCall() {
+      if (!ws) return;
+      log("Ending WebSocket call...");
+      try {
+        ws.send(JSON.stringify({ event: "stop" }));
+      } catch (e) {}
+      ws.close();
+      ws = null;
+
+      if (micProcessor) {
+        micProcessor.disconnect();
+        micProcessor.onaudioprocess = null;
+      }
+      if (micSource) micSource.disconnect();
+      if (micSink) micSink.disconnect();
+      micProcessor = null;
+      micSource = null;
+      micSink = null;
+      sendBuffer = [];
+      playheadTime = 0;
+
+      if (localStream) {
+        localStream.getTracks().forEach((t) => t.stop());
+        localStream = null;
+      }
+      stopMeter();
+      setPill(statusRtc, "Link: idle");
+      setPill(statusMic, "Mic: off");
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnMute.disabled = true;
+      micMuted = false;
+      btnMute.textContent = "Mute Mic";
+      activeMode = null;
+    }
+
+    function stopCall() {
+      if (activeMode === "ws") {
+        return stopWsCall();
+      }
+      return stopRtcCall();
+    }
+
+    function toggleMute() {
+      if (!localStream) return;
+      micMuted = !micMuted;
+      localStream.getAudioTracks().forEach((t) => t.enabled = !micMuted);
+      btnMute.textContent = micMuted ? "Unmute Mic" : "Mute Mic";
+      setPill(statusMic, micMuted ? "Mic: muted" : "Mic: live", micMuted ? "warn" : "ok");
+      log(micMuted ? "Microphone muted" : "Microphone unmuted");
+    }
+
+    btnStart.addEventListener("click", startCall);
+    btnStop.addEventListener("click", stopCall);
+    btnMute.addEventListener("click", toggleMute);
+    btnHealth.addEventListener("click", checkServer);
+
+    window.addEventListener("beforeunload", stopCall);
+    showMicWarning();
+    checkServer();
+  </script>
+</body>
+</html>

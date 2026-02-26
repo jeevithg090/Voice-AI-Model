@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Agent Push To Talk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08131d;
+      --bg-soft: #0f2130;
+      --card: rgba(16, 31, 45, 0.88);
+      --ink: #e8f1f8;
+      --muted: #96afc3;
+      --line: rgba(157, 184, 205, 0.2);
+      --brand: #1ea6a4;
+      --brand-2: #0d7d9e;
+      --danger: #de5f4c;
+      --ok: #3fc17f;
+      --warn: #f0b14f;
+      --shadow: 0 22px 55px rgba(2, 8, 13, 0.52);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 500px at 20% -10%, rgba(30, 166, 164, 0.2), transparent 60%),
+        radial-gradient(800px 460px at 90% 0%, rgba(13, 125, 158, 0.28), transparent 55%),
+        linear-gradient(155deg, #071119, #0d1822 45%, #0b1b29);
+      padding: 22px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(980px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+
+    .header {
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid .field:first-child {
+      grid-column: span 3;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: var(--ink);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      padding: 11px 12px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: rgba(30, 166, 164, 0.8);
+      box-shadow: 0 0 0 3px rgba(30, 166, 164, 0.18);
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 0.84rem;
+      color: var(--muted);
+      background: rgba(8, 19, 29, 0.55);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #6f8396;
+    }
+
+    .dot.ok { background: var(--ok); box-shadow: 0 0 14px rgba(63, 193, 127, 0.45); }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 14px rgba(240, 177, 79, 0.45); }
+    .dot.bad { background: var(--danger); box-shadow: 0 0 14px rgba(222, 95, 76, 0.5); }
+
+    .hold-wrap {
+      display: grid;
+      place-items: center;
+      padding: 18px 10px 12px;
+      border: 1px dashed rgba(157, 184, 205, 0.28);
+      border-radius: 16px;
+      background: rgba(8, 19, 29, 0.32);
+    }
+
+    .hold-btn {
+      width: min(360px, 100%);
+      border: 0;
+      border-radius: 14px;
+      padding: 17px 18px;
+      color: #e9fffc;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      box-shadow: 0 12px 28px rgba(8, 38, 58, 0.45);
+      transition: transform 0.12s ease, filter 0.16s ease;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .hold-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .hold-btn.active {
+      transform: scale(0.99);
+      filter: saturate(1.2) brightness(1.05);
+      background: linear-gradient(120deg, #cf5746, #b53c35);
+    }
+
+    .hint {
+      margin-top: 11px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-align: center;
+    }
+
+    .play-cta {
+      border: 1px solid rgba(240, 177, 79, 0.55);
+      border-radius: 10px;
+      background: rgba(240, 177, 79, 0.14);
+      color: #ffeac0;
+      font-weight: 600;
+      padding: 9px 12px;
+      cursor: pointer;
+      width: fit-content;
+      display: none;
+    }
+
+    .play-cta.show {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px 14px;
+      max-height: 330px;
+      overflow: auto;
+      background: rgba(8, 19, 29, 0.45);
+    }
+
+    .line {
+      padding: 10px 11px;
+      border-radius: 11px;
+      margin-bottom: 10px;
+      font-size: 0.93rem;
+      line-height: 1.45;
+    }
+
+    .line.user {
+      background: rgba(30, 166, 164, 0.16);
+      border: 1px solid rgba(30, 166, 164, 0.35);
+    }
+
+    .line.bot {
+      background: rgba(13, 125, 158, 0.18);
+      border: 1px solid rgba(13, 125, 158, 0.35);
+    }
+
+    .meta {
+      display: block;
+      margin-top: 4px;
+      font-family: "IBM Plex Mono", monospace;
+      color: #87a8be;
+      font-size: 0.74rem;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 18px 10px;
+    }
+
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .grid .field:first-child {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="header">
+      <h1 class="title">Multilingual Voice Agent</h1>
+      <div class="subtitle">Press and hold to record. Release to upload a single turn. Server replies with generated voice.</div>
+    </section>
+
+    <section class="panel">
+      <div class="grid">
+        <div class="field">
+          <label for="backendUrl">Backend URL (ngrok/local)</label>
+          <input id="backendUrl" placeholder="https://xxxx.ngrok-free.app" />
+        </div>
+        <div class="field">
+          <label for="agentType">Voice Agent Purpose</label>
+          <select id="agentType">
+            <option value="hospital_kiosk">Hospital Kiosk</option>
+            <option value="college_admission">College Admission</option>
+            <option value="laptop_support">Laptop Customer Support</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="ta">Tamil</option>
+            <option value="te">Telugu</option>
+            <option value="kn">Kannada</option>
+            <option value="auto">Auto Detect</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="pill"><span class="dot" id="dotServer"></span> <span id="serverState">Server: checking</span></div>
+        <div class="pill"><span class="dot" id="dotMic"></span> <span id="micState">Mic: idle</span></div>
+        <div class="pill"><span class="dot" id="dotTurn"></span> <span id="turnState">Turn: ready</span></div>
+      </div>
+
+      <div class="hold-wrap">
+        <button id="holdButton" class="hold-btn" type="button">Hold To Talk</button>
+        <div class="hint">Desktop: hold mouse button. Mobile: press and hold touch.</div>
+      </div>
+      <button id="playReplyButton" class="play-cta" type="button">Tap to play reply</button>
+    </section>
+
+    <section class="panel">
+      <div class="chat" id="chatLog">
+        <div class="empty">No turns yet. Hold the button and speak.</div>
+      </div>
+    </section>
+  </div>
+
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <script>
+    const backendInput = document.getElementById("backendUrl");
+    const languageSelect = document.getElementById("language");
+    const agentTypeSelect = document.getElementById("agentType");
+    const holdButton = document.getElementById("holdButton");
+    const chatLog = document.getElementById("chatLog");
+    const remoteAudio = document.getElementById("remoteAudio");
+    const playReplyButton = document.getElementById("playReplyButton");
+
+    const dotServer = document.getElementById("dotServer");
+    const dotMic = document.getElementById("dotMic");
+    const dotTurn = document.getElementById("dotTurn");
+    const serverState = document.getElementById("serverState");
+    const micState = document.getElementById("micState");
+    const turnState = document.getElementById("turnState");
+
+    const storedBackend = localStorage.getItem("pushTalkBackendUrl");
+    backendInput.value = storedBackend || window.location.origin;
+
+    let localStream = null;
+    let mediaRecorder = null;
+    let chunks = [];
+    let isRecording = false;
+    let turnInFlight = false;
+    let sessionId = "";
+    let playbackUrl = "";
+    let audioQueue = [];
+    let isAudioPlaying = false;
+    let streamEnabled = true;
+
+    function normalizeBackendUrl(raw) {
+      let value = (raw || "").trim();
+      if (!value) value = window.location.origin;
+      if (!/^https?:\/\//i.test(value)) {
+        value = `${window.location.protocol}//${value}`;
+      }
+      return value.replace(/\/+$/, "");
+    }
+
+    function getBackendUrl() {
+      return normalizeBackendUrl(backendInput.value);
+    }
+
+    function setStatus(dot, label, text, level) {
+      dot.className = `dot ${level || ""}`.trim();
+      label.textContent = text;
+    }
+
+    function appendLine(role, text, extra) {
+      if (chatLog.querySelector(".empty")) {
+        chatLog.innerHTML = "";
+      }
+      const row = document.createElement("div");
+      row.className = `line ${role === "user" ? "user" : "bot"}`;
+      row.textContent = text || "(empty)";
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = `${new Date().toLocaleTimeString()}${extra ? ` | ${extra}` : ""}`;
+      row.appendChild(meta);
+      chatLog.appendChild(row);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function supportedMimeType() {
+      if (typeof MediaRecorder === "undefined") return "";
+      const options = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus"
+      ];
+      for (const mime of options) {
+        if (MediaRecorder.isTypeSupported(mime)) return mime;
+      }
+      return "";
+    }
+
+    function showPlayCta() {
+      playReplyButton.classList.add("show");
+    }
+
+    function hidePlayCta() {
+      playReplyButton.classList.remove("show");
+    }
+
+    function clearPlaybackUrl() {
+      if (playbackUrl) {
+        URL.revokeObjectURL(playbackUrl);
+        playbackUrl = "";
+      }
+    }
+
+    function resetAudioQueue() {
+      remoteAudio.pause();
+      remoteAudio.src = "";
+      remoteAudio.srcObject = null;
+      isAudioPlaying = false;
+      for (const item of audioQueue) {
+        if (item && item.url) URL.revokeObjectURL(item.url);
+      }
+      audioQueue = [];
+      hidePlayCta();
+      clearPlaybackUrl();
+    }
+
+    function b64ToBytes(b64) {
+      const binary = atob(b64 || "");
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function enqueueAudioChunk(audioB64, mime) {
+      if (!audioB64) return;
+      const bytes = b64ToBytes(audioB64);
+      const blob = new Blob([bytes], { type: mime || "audio/wav" });
+      const url = URL.createObjectURL(blob);
+      audioQueue.push({ url });
+      if (audioQueue.length > 50) {
+        const dropped = audioQueue.shift();
+        if (dropped && dropped.url) URL.revokeObjectURL(dropped.url);
+      }
+      playNextChunk();
+    }
+
+    async function playNextChunk() {
+      if (isAudioPlaying || !audioQueue.length) return;
+      const item = audioQueue.shift();
+      if (!item) return;
+      isAudioPlaying = true;
+      playbackUrl = item.url;
+      remoteAudio.srcObject = null;
+      remoteAudio.src = item.url;
+      remoteAudio.onended = () => {
+        URL.revokeObjectURL(item.url);
+        if (playbackUrl === item.url) playbackUrl = "";
+        isAudioPlaying = false;
+        playNextChunk();
+      };
+      remoteAudio.onerror = () => {
+        URL.revokeObjectURL(item.url);
+        if (playbackUrl === item.url) playbackUrl = "";
+        isAudioPlaying = false;
+        playNextChunk();
+      };
+
+      try {
+        await remoteAudio.play();
+        hidePlayCta();
+      } catch (err) {
+        isAudioPlaying = false;
+        showPlayCta();
+      }
+    }
+
+    function buildTurnForm(blob, mimeType) {
+      const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
+      const form = new FormData();
+      form.append("audio", blob, `turn.${ext}`);
+      form.append("language", languageSelect.value);
+      form.append("auto_detect", String(languageSelect.value === "auto"));
+      form.append("agent_type", agentTypeSelect.value);
+      if (sessionId) {
+        form.append("session_id", sessionId);
+      }
+      return form;
+    }
+
+    async function checkServer() {
+      try {
+        const res = await fetch(`${getBackendUrl()}/ready`);
+        if (!res.ok) throw new Error(String(res.status));
+        const payload = await res.json();
+        streamEnabled = Boolean(payload.voice_turn_stream_enabled !== false);
+        if (payload.ready) {
+          setStatus(dotServer, serverState, streamEnabled ? "Server: ready (stream)" : "Server: ready (legacy)", "ok");
+        } else {
+          setStatus(dotServer, serverState, "Server: loading", "warn");
+        }
+      } catch (err) {
+        setStatus(dotServer, serverState, "Server: offline", "bad");
+      }
+    }
+
+    async function loadAgentTypes() {
+      try {
+        const res = await fetch(`${getBackendUrl()}/agent-types`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const types = Array.isArray(data.agent_types) ? data.agent_types : [];
+        if (!types.length) return;
+
+        const selected = agentTypeSelect.value;
+        agentTypeSelect.innerHTML = "";
+        for (const item of types) {
+          const opt = document.createElement("option");
+          opt.value = item.type;
+          opt.textContent = item.label || item.type;
+          agentTypeSelect.appendChild(opt);
+        }
+        if (types.some((x) => x.type === selected)) {
+          agentTypeSelect.value = selected;
+        }
+      } catch (err) {
+        // Keep static defaults.
+      }
+    }
+
+    async function ensureMic() {
+      if (localStream) return localStream;
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      setStatus(dotMic, micState, "Mic: active", "ok");
+      return localStream;
+    }
+
+    async function sendTurnLegacy(blob, mimeType) {
+      const form = buildTurnForm(blob, mimeType);
+      const res = await fetch(`${getBackendUrl()}/voice-turn`, { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      sessionId = data.session_id || sessionId;
+      if (data.transcript) {
+        appendLine("user", data.transcript, data.language || languageSelect.value);
+      }
+      if (data.response) {
+        const t = data.timings_ms || {};
+        const details = `${data.agent_name || agentTypeSelect.value}${t.turn_total_ms ? ` | total ${t.turn_total_ms} ms` : ""}`;
+        appendLine("bot", data.response, details);
+      }
+      if (data.audio_b64) {
+        enqueueAudioChunk(data.audio_b64, data.audio_mime || "audio/wav");
+      }
+      setStatus(dotTurn, turnState, "Turn: complete", "ok");
+    }
+
+    async function sendTurnStream(blob, mimeType) {
+      const form = buildTurnForm(blob, mimeType);
+      const res = await fetch(`${getBackendUrl()}/voice-turn-stream`, {
+        method: "POST",
+        body: form,
+        headers: { Accept: "text/event-stream" }
+      });
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = "";
+      let doneSeen = false;
+      let chunkCounter = 0;
+      let finalResponse = "";
+      let finalLanguage = languageSelect.value;
+      let finalAgentName = agentTypeSelect.options[agentTypeSelect.selectedIndex]?.text || agentTypeSelect.value;
+
+      setStatus(dotTurn, turnState, "Turn: transcribing", "warn");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        sseBuffer += decoder.decode(value, { stream: true });
+
+        let splitAt = sseBuffer.indexOf("\n\n");
+        while (splitAt !== -1) {
+          const frame = sseBuffer.slice(0, splitAt);
+          sseBuffer = sseBuffer.slice(splitAt + 2);
+          splitAt = sseBuffer.indexOf("\n\n");
+          if (!frame.trim()) continue;
+
+          let eventName = "message";
+          const dataLines = [];
+          for (const line of frame.split(/\r?\n/)) {
+            if (line.startsWith("event:")) {
+              eventName = line.slice(6).trim();
+            } else if (line.startsWith("data:")) {
+              dataLines.push(line.slice(5).trimStart());
+            }
+          }
+
+          let payload = {};
+          const dataText = dataLines.join("\n");
+          if (dataText) {
+            try {
+              payload = JSON.parse(dataText);
+            } catch (err) {
+              payload = { text: dataText };
+            }
+          }
+
+          if (eventName === "meta") {
+            sessionId = payload.session_id || sessionId;
+            finalLanguage = payload.language || finalLanguage;
+            finalAgentName = payload.agent_name || finalAgentName;
+          } else if (eventName === "transcript") {
+            appendLine("user", payload.text || "", finalLanguage);
+          } else if (eventName === "llm_chunk") {
+            chunkCounter += 1;
+            setStatus(dotTurn, turnState, `Turn: responding (chunk ${chunkCounter})`, "warn");
+          } else if (eventName === "audio_chunk") {
+            enqueueAudioChunk(payload.audio_b64 || "", payload.audio_mime || "audio/wav");
+          } else if (eventName === "error") {
+            console.warn("stream error", payload);
+          } else if (eventName === "done") {
+            doneSeen = true;
+            finalResponse = payload.response || finalResponse;
+            const t = payload.timings_ms || {};
+            const details = `${finalAgentName}${t.tts_first_chunk_ms ? ` | first audio ${t.tts_first_chunk_ms} ms` : ""}${t.turn_total_ms ? ` | total ${t.turn_total_ms} ms` : ""}`;
+            appendLine("bot", finalResponse || "(empty)", details);
+            setStatus(dotTurn, turnState, "Turn: complete", "ok");
+          }
+        }
+      }
+
+      if (!doneSeen) {
+        throw new Error("Streaming ended before done event");
+      }
+    }
+
+    async function sendTurn(blob, mimeType) {
+      if (!blob || blob.size < 1200) {
+        setStatus(dotTurn, turnState, "Turn: too short", "warn");
+        return;
+      }
+      turnInFlight = true;
+      holdButton.disabled = true;
+      setStatus(dotTurn, turnState, "Turn: transcribing", "warn");
+      resetAudioQueue();
+
+      try {
+        if (streamEnabled) {
+          try {
+            await sendTurnStream(blob, mimeType);
+          } catch (streamErr) {
+            console.warn("voice-turn-stream failed, falling back to /voice-turn", streamErr);
+            await sendTurnLegacy(blob, mimeType);
+          }
+        } else {
+          await sendTurnLegacy(blob, mimeType);
+        }
+      } catch (err) {
+        setStatus(dotTurn, turnState, "Turn: error", "bad");
+        alert(`Voice turn failed: ${err.message}`);
+      } finally {
+        turnInFlight = false;
+        holdButton.disabled = false;
+        holdButton.textContent = "Hold To Talk";
+        holdButton.classList.remove("active");
+      }
+    }
+
+    async function startHold(evt) {
+      evt.preventDefault();
+      if (turnInFlight || isRecording) return;
+
+      try {
+        const stream = await ensureMic();
+        chunks = [];
+        const mime = supportedMimeType();
+        const options = mime ? { mimeType: mime } : undefined;
+        mediaRecorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) chunks.push(e.data);
+        };
+        mediaRecorder.onstop = async () => {
+          const recorderMime = mediaRecorder?.mimeType || mime || "audio/webm";
+          const blob = new Blob(chunks, { type: recorderMime });
+          chunks = [];
+          mediaRecorder = null;
+          await sendTurn(blob, recorderMime);
+        };
+        mediaRecorder.start(120);
+        isRecording = true;
+        holdButton.textContent = "Release To Send";
+        holdButton.classList.add("active");
+        setStatus(dotTurn, turnState, "Turn: recording", "warn");
+      } catch (err) {
+        setStatus(dotMic, micState, "Mic: blocked", "bad");
+        alert(`Microphone unavailable: ${err.message}`);
+      }
+    }
+
+    function stopHold(evt) {
+      if (evt) evt.preventDefault();
+      if (!isRecording || !mediaRecorder) return;
+      isRecording = false;
+      holdButton.textContent = "Uploading...";
+      if (mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    }
+
+    backendInput.addEventListener("change", async () => {
+      backendInput.value = getBackendUrl();
+      localStorage.setItem("pushTalkBackendUrl", backendInput.value);
+      await Promise.all([checkServer(), loadAgentTypes()]);
+    });
+
+    playReplyButton.addEventListener("click", async () => {
+      hidePlayCta();
+      try {
+        if (remoteAudio.src) {
+          await remoteAudio.play();
+        } else {
+          await playNextChunk();
+        }
+      } catch (err) {
+        showPlayCta();
+      }
+    });
+
+    holdButton.addEventListener("pointerdown", startHold);
+    holdButton.addEventListener("pointerup", stopHold);
+    holdButton.addEventListener("pointerleave", stopHold);
+    holdButton.addEventListener("pointercancel", stopHold);
+    holdButton.addEventListener("touchend", stopHold, { passive: false });
+    holdButton.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    window.addEventListener("beforeunload", () => {
+      resetAudioQueue();
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+    });
+
+    backendInput.value = getBackendUrl();
+    checkServer();
+    loadAgentTypes();
+    setInterval(checkServer, 30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Datasets
+data/
+*.zip
+
+# Audio files
+*.wav
+*.mp3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.venv/
+
+# Model weights
+models/
+*.pt
+*.pth
+*.h5
+
+# macOS junk
+.DS_Store
+
+# TTS Assets (Large files)
+src/tts/piper_bin/
+src/tts/piper_models/
+src/tts/piper.tar.gz
+
+# Test Outputs
+test_output/
+tts_output/
+debug_tts_*.wav
+
+# Local Cache
+semantic_cache.json

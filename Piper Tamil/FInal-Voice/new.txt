@@ -1,0 +1,955 @@
+        x_80: "f32[s27, 2, s11, 2*s11 - 1][2*s11*(2*s11 - 1), s11*(2*s11 - 1), 2*s11 - 1, 1]cpu" = torch._C._nn.pad(p_attn_11, (0, sub_61, 0, 0, 0, 0, 0, 0), 'constant', None);  p_attn_11 = sub_61 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:343 in _absolute_position_to_relative_position, code: x_flat = x.view([batch, heads, (length * length) + (length * (length - 1))])
+        mul_63: "Sym(s11**2)" = getitem_71 * getitem_71
+        sub_62: "Sym(s11 - 1)" = getitem_71 - 1
+        mul_64: "Sym(s11*(s11 - 1))" = getitem_71 * sub_62;  sub_62 = None
+        add_43: "Sym(s11**2 + s11*(s11 - 1))" = mul_63 + mul_64;  mul_63 = mul_64 = None
+        x_flat_22: "f32[s27, 2, s11**2 + s11*(s11 - 1)][2*s11**2 + 2*s11*(s11 - 1), s11**2 + s11*(s11 - 1), 1]cpu" = x_80.view([getitem_69, 2, add_43]);  x_80 = add_43 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        x_flat_23: "f32[s27, 2, s11**2 + s11*(s11 - 1) + s11][2*s11**2 + 2*s11*(s11 - 1) + 2*s11, s11**2 + s11*(s11 - 1) + s11, 1]cpu" = torch._C._nn.pad(x_flat_22, (getitem_71, 0, 0, 0, 0, 0), 'constant', None);  x_flat_22 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:347 in _absolute_position_to_relative_position, code: x_final = x_flat.view([batch, heads, length, 2 * length])[:, :, :, 1:]
+        mul_65: "Sym(2*s11)" = 2 * getitem_71
+        view_46: "f32[s27, 2, s11, 2*s11][4*s11**2, 2*s11**2, 2*s11, 1]cpu" = x_flat_23.view([getitem_69, 2, getitem_71, mul_65]);  x_flat_23 = getitem_69 = getitem_71 = mul_65 = None
+        x_final_11: "f32[s27, 2, s11, 2*s11 - 1][4*s11**2, 2*s11**2, 2*s11, 1]cpu" = view_46[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(1, None, None))];  view_46 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:264 in attention, code: self.emb_rel_v, t_s
+        l__self____export_root_enc_p_encoder_attn_layers_5_emb_rel_v: "f32[1, 9, 96][864, 96, 1]cpu" = self.L__self____export_root_enc_p_encoder_attn_layers_5_emb_rel_v
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:295 in _get_relative_embeddings, code: pad_length = max(length - (self.window_size + 1), 0)
+        sub_63: "Sym(s11 - 5)" = size_27 - 5
+        sym_max_22: "Sym(Max(0, s11 - 5))" = torch.sym_max(sub_63, 0);  sub_63 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:296 in _get_relative_embeddings, code: slice_start_position = max((self.window_size + 1) - length, 0)
+        sub_64: "Sym(5 - s11)" = 5 - size_27
+        sym_max_23: "Sym(Max(0, 5 - s11))" = torch.sym_max(sub_64, 0);  sub_64 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:297 in _get_relative_embeddings, code: slice_end_position = slice_start_position + 2 * length - 1
+        mul_66: "Sym(2*s11)" = 2 * size_27;  size_27 = None
+        add_44: "Sym(2*s11 + Max(0, 5 - s11))" = sym_max_23 + mul_66;  mul_66 = None
+        sub_65: "Sym(2*s11 + Max(0, 5 - s11) - 1)" = add_44 - 1;  add_44 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:298 in _get_relative_embeddings, code: if pad_length > 0:
+        gt_11: "Sym(Max(0, s11 - 5) > 0)" = sym_max_22 > 0;  gt_11 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        padded_relative_embeddings_11: "f32[1, 2*Max(0, s11 - 5) + 9, 96][192*Max(0, s11 - 5) + 864, 96, 1]cpu" = torch._C._nn.pad(l__self____export_root_enc_p_encoder_attn_layers_5_emb_rel_v, (0, 0, sym_max_22, sym_max_22, 0, 0), 'constant', None);  l__self____export_root_enc_p_encoder_attn_layers_5_emb_rel_v = sym_max_22 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:306 in _get_relative_embeddings, code: used_relative_embeddings = padded_relative_embeddings[
+        used_relative_embeddings_11: "f32[1, 2*s11 - 1, 96][192*Max(0, s11 - 5) + 864, 96, 1]cpu" = padded_relative_embeddings_11[(slice(None, None, None), slice(sym_max_23, sub_65, None))];  padded_relative_embeddings_11 = sym_max_23 = sub_65 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:280 in _matmul_with_relative_values, code: ret = torch.matmul(x, y.unsqueeze(0))
+        unsqueeze_16: "f32[1, 1, 2*s11 - 1, 96][192*Max(0, s11 - 5) + 864, 192*Max(0, s11 - 5) + 864, 96, 1]cpu" = used_relative_embeddings_11.unsqueeze(0);  used_relative_embeddings_11 = None
+        ret_11: "f32[s27, 2, s11, 96][192*s11, 96*s11, 96, 1]cpu" = torch.matmul(x_final_11, unsqueeze_16);  x_final_11 = unsqueeze_16 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:266 in attention, code: output = output + self._matmul_with_relative_values(
+        output_16: "f32[s27, 2, s11, 96][192*s11, 96*s11, 96, 1]cpu" = output_15 + ret_11;  output_15 = ret_11 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:270 in attention, code: output.transpose(2, 3).contiguous().view(b, d, t_t)
+        transpose_56: "f32[s27, 2, 96, s11][192*s11, 96*s11, 1, 96]cpu" = output_16.transpose(2, 3);  output_16 = None
+        contiguous_5: "f32[s27, 2, 96, s11][192*s11, 96*s11, s11, 1]cpu" = transpose_56.contiguous();  transpose_56 = None
+        output_17: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = contiguous_5.view(size_26, 192, size_28);  contiguous_5 = size_26 = size_28 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:222 in forward, code: x = self.conv_o(x)
+        l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_enc_p_encoder_attn_layers_5_conv_o_weight
+        l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_bias: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_attn_layers_5_conv_o_bias
+        x_81: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(output_17, l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_weight, l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_bias, (1,), (0,), (1,), 1);  output_17 = l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_weight = l__self____export_root_enc_p_encoder_attn_layers_5_conv_o_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:67 in forward, code: y = self.drop(y)
+        y_15: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.nn.functional.dropout(x_81, 0.1, False, False);  x_81 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:68 in forward, code: x = norm_layer_1(x + y)
+        add_46: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_78 + y_15;  x_78 = y_15 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_82: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = add_46.transpose(1, -1);  add_46 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_enc_p_encoder_norm_layers_1_5_gamma: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_norm_layers_1_5_gamma
+        l__self____export_root_enc_p_encoder_norm_layers_1_5_beta: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_norm_layers_1_5_beta
+        x_83: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_82, (192,), l__self____export_root_enc_p_encoder_norm_layers_1_5_gamma, l__self____export_root_enc_p_encoder_norm_layers_1_5_beta, 1e-05);  x_82 = l__self____export_root_enc_p_encoder_norm_layers_1_5_gamma = l__self____export_root_enc_p_encoder_norm_layers_1_5_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        x_84: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_83.transpose(1, -1);  x_83 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:390 in forward, code: padding1 = self._same_padding(x * x_mask)
+        mul_67: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_84 * x_mask
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        x_85: "f32[s27, 192, s11 + 2][192*s11 + 384, s11 + 2, 1]cpu" = torch._C._nn.pad(mul_67, (1, 1, 0, 0, 0, 0), 'constant', None);  mul_67 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:392 in forward, code: x = self.conv_1(padding1)
+        l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_weight: "f32[768, 192, 3][576, 3, 1]cpu" = self.L__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_weight
+        l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_bias: "f32[768][1]cpu" = self.L__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_bias
+        x_86: "f32[s27, 768, s11][768*s11, s11, 1]cpu" = torch.conv1d(x_85, l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_weight, l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_bias, (1,), (0,), (1,), 1);  x_85 = l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_weight = l__self____export_root_enc_p_encoder_ffn_layers_5_conv_1_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:397 in forward, code: x = torch.relu(x)
+        x_87: "f32[s27, 768, s11][768*s11, s11, 1]cpu" = torch.relu(x_86);  x_86 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:398 in forward, code: x = self.drop(x)
+        x_88: "f32[s27, 768, s11][768*s11, s11, 1]cpu" = torch.nn.functional.dropout(x_87, 0.1, False, False);  x_87 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:403 in forward, code: padding2 = self._same_padding(x * x_mask)
+        mul_68: "f32[s27, 768, s11][768*s11, s11, 1]cpu" = x_88 * x_mask;  x_88 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        x_89: "f32[s27, 768, s11 + 2][768*s11 + 1536, s11 + 2, 1]cpu" = torch._C._nn.pad(mul_68, (1, 1, 0, 0, 0, 0), 'constant', None);  mul_68 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:405 in forward, code: x = self.conv_2(padding2)
+        l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_weight: "f32[192, 768, 3][2304, 3, 1]cpu" = self.L__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_weight
+        l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_bias: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_bias
+        x_90: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(x_89, l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_weight, l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_bias, (1,), (0,), (1,), 1);  x_89 = l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_weight = l__self____export_root_enc_p_encoder_ffn_layers_5_conv_2_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:407 in forward, code: return x * x_mask
+        y_16: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_90 * x_mask;  x_90 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:71 in forward, code: y = self.drop(y)
+        y_17: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.nn.functional.dropout(y_16, 0.1, False, False);  y_16 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:72 in forward, code: x = norm_layer_2(x + y)
+        add_47: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_84 + y_17;  x_84 = y_17 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_91: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = add_47.transpose(1, -1);  add_47 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_enc_p_encoder_norm_layers_2_5_gamma: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_norm_layers_2_5_gamma
+        l__self____export_root_enc_p_encoder_norm_layers_2_5_beta: "f32[192][1]cpu" = self.L__self____export_root_enc_p_encoder_norm_layers_2_5_beta
+        x_92: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_91, (192,), l__self____export_root_enc_p_encoder_norm_layers_2_5_gamma, l__self____export_root_enc_p_encoder_norm_layers_2_5_beta, 1e-05);  x_91 = l__self____export_root_enc_p_encoder_norm_layers_2_5_gamma = l__self____export_root_enc_p_encoder_norm_layers_2_5_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        x_93: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_92.transpose(1, -1);  x_92 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/attentions.py:73 in forward, code: x = x * x_mask
+        x_94: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_93 * x_mask;  x_93 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:206 in forward, code: stats = self.proj(x) * x_mask
+        l__self____export_root_enc_p_proj_weight: "f32[384, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_enc_p_proj_weight
+        l__self____export_root_enc_p_proj_bias: "f32[384][1]cpu" = self.L__self____export_root_enc_p_proj_bias
+        conv1d_36: "f32[s27, 384, s11][384*s11, s11, 1]cpu" = torch.conv1d(x_94, l__self____export_root_enc_p_proj_weight, l__self____export_root_enc_p_proj_bias, (1,), (0,), (1,), 1);  l__self____export_root_enc_p_proj_weight = l__self____export_root_enc_p_proj_bias = None
+        stats: "f32[s27, 384, s11][384*s11, s11, 1]cpu" = conv1d_36 * x_mask;  conv1d_36 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:208 in forward, code: m, logs = torch.split(stats, self.out_channels, dim=1)
+        split = torch.functional.split(stats, 192, dim = 1);  stats = None
+        m: "f32[s27, 192, s11][384*s11, s11, 1]cpu" = split[0];  m = None
+        logs: "f32[s27, 192, s11][384*s11, s11, 1]cpu" = split[1];  split = logs = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:64 in forward, code: x = torch.detach(x)
+        x_95: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.detach(x_94);  x_94 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:65 in forward, code: x = self.pre(x)
+        l__self____export_root_dp_pre_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_pre_weight
+        l__self____export_root_dp_pre_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_pre_bias
+        x_96: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(x_95, l__self____export_root_dp_pre_weight, l__self____export_root_dp_pre_bias, (1,), (0,), (1,), 1);  x_95 = l__self____export_root_dp_pre_weight = l__self____export_root_dp_pre_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_72: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_96 * x_mask
+        l__self____export_root_dp_convs_convs_sep_0_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_convs_convs_sep_0_weight
+        l__self____export_root_dp_convs_convs_sep_0_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_sep_0_bias
+        y_18: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_72, l__self____export_root_dp_convs_convs_sep_0_weight, l__self____export_root_dp_convs_convs_sep_0_bias, (1,), (1,), (1,), 192);  mul_72 = l__self____export_root_dp_convs_convs_sep_0_weight = l__self____export_root_dp_convs_convs_sep_0_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_97: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_18.transpose(1, -1);  y_18 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_1_0_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_0_gamma
+        l__self____export_root_dp_convs_norms_1_0_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_0_beta
+        x_98: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_97, (192,), l__self____export_root_dp_convs_norms_1_0_gamma, l__self____export_root_dp_convs_norms_1_0_beta, 1e-05);  x_97 = l__self____export_root_dp_convs_norms_1_0_gamma = l__self____export_root_dp_convs_norms_1_0_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_19: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_98.transpose(1, -1);  x_98 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_20: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_19);  y_19 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_convs_convs_1x1_0_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_0_weight
+        l__self____export_root_dp_convs_convs_1x1_0_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_0_bias
+        y_21: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_20, l__self____export_root_dp_convs_convs_1x1_0_weight, l__self____export_root_dp_convs_convs_1x1_0_bias, (1,), (0,), (1,), 1);  y_20 = l__self____export_root_dp_convs_convs_1x1_0_weight = l__self____export_root_dp_convs_convs_1x1_0_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_99: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_21.transpose(1, -1);  y_21 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_2_0_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_0_gamma
+        l__self____export_root_dp_convs_norms_2_0_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_0_beta
+        x_100: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_99, (192,), l__self____export_root_dp_convs_norms_2_0_gamma, l__self____export_root_dp_convs_norms_2_0_beta, 1e-05);  x_99 = l__self____export_root_dp_convs_norms_2_0_gamma = l__self____export_root_dp_convs_norms_2_0_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_22: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_100.transpose(1, -1);  x_100 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_23: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_22);  y_22 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_24: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_23, 0.5, False, False);  y_23 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_101: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_96 + y_24;  x_96 = y_24 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_73: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_101 * x_mask
+        l__self____export_root_dp_convs_convs_sep_1_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_convs_convs_sep_1_weight
+        l__self____export_root_dp_convs_convs_sep_1_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_sep_1_bias
+        y_25: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_73, l__self____export_root_dp_convs_convs_sep_1_weight, l__self____export_root_dp_convs_convs_sep_1_bias, (1,), (3,), (3,), 192);  mul_73 = l__self____export_root_dp_convs_convs_sep_1_weight = l__self____export_root_dp_convs_convs_sep_1_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_102: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_25.transpose(1, -1);  y_25 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_1_1_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_1_gamma
+        l__self____export_root_dp_convs_norms_1_1_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_1_beta
+        x_103: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_102, (192,), l__self____export_root_dp_convs_norms_1_1_gamma, l__self____export_root_dp_convs_norms_1_1_beta, 1e-05);  x_102 = l__self____export_root_dp_convs_norms_1_1_gamma = l__self____export_root_dp_convs_norms_1_1_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_26: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_103.transpose(1, -1);  x_103 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_27: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_26);  y_26 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_convs_convs_1x1_1_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_1_weight
+        l__self____export_root_dp_convs_convs_1x1_1_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_1_bias
+        y_28: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_27, l__self____export_root_dp_convs_convs_1x1_1_weight, l__self____export_root_dp_convs_convs_1x1_1_bias, (1,), (0,), (1,), 1);  y_27 = l__self____export_root_dp_convs_convs_1x1_1_weight = l__self____export_root_dp_convs_convs_1x1_1_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_104: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_28.transpose(1, -1);  y_28 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_2_1_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_1_gamma
+        l__self____export_root_dp_convs_norms_2_1_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_1_beta
+        x_105: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_104, (192,), l__self____export_root_dp_convs_norms_2_1_gamma, l__self____export_root_dp_convs_norms_2_1_beta, 1e-05);  x_104 = l__self____export_root_dp_convs_norms_2_1_gamma = l__self____export_root_dp_convs_norms_2_1_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_29: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_105.transpose(1, -1);  x_105 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_30: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_29);  y_29 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_31: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_30, 0.5, False, False);  y_30 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_106: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_101 + y_31;  x_101 = y_31 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_74: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_106 * x_mask
+        l__self____export_root_dp_convs_convs_sep_2_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_convs_convs_sep_2_weight
+        l__self____export_root_dp_convs_convs_sep_2_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_sep_2_bias
+        y_32: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_74, l__self____export_root_dp_convs_convs_sep_2_weight, l__self____export_root_dp_convs_convs_sep_2_bias, (1,), (9,), (9,), 192);  mul_74 = l__self____export_root_dp_convs_convs_sep_2_weight = l__self____export_root_dp_convs_convs_sep_2_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_107: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_32.transpose(1, -1);  y_32 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_1_2_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_2_gamma
+        l__self____export_root_dp_convs_norms_1_2_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_1_2_beta
+        x_108: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_107, (192,), l__self____export_root_dp_convs_norms_1_2_gamma, l__self____export_root_dp_convs_norms_1_2_beta, 1e-05);  x_107 = l__self____export_root_dp_convs_norms_1_2_gamma = l__self____export_root_dp_convs_norms_1_2_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_33: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_108.transpose(1, -1);  x_108 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_34: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_33);  y_33 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_convs_convs_1x1_2_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_2_weight
+        l__self____export_root_dp_convs_convs_1x1_2_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_convs_1x1_2_bias
+        y_35: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_34, l__self____export_root_dp_convs_convs_1x1_2_weight, l__self____export_root_dp_convs_convs_1x1_2_bias, (1,), (0,), (1,), 1);  y_34 = l__self____export_root_dp_convs_convs_1x1_2_weight = l__self____export_root_dp_convs_convs_1x1_2_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_109: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_35.transpose(1, -1);  y_35 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_convs_norms_2_2_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_2_gamma
+        l__self____export_root_dp_convs_norms_2_2_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_convs_norms_2_2_beta
+        x_110: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_109, (192,), l__self____export_root_dp_convs_norms_2_2_gamma, l__self____export_root_dp_convs_norms_2_2_beta, 1e-05);  x_109 = l__self____export_root_dp_convs_norms_2_2_gamma = l__self____export_root_dp_convs_norms_2_2_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_36: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_110.transpose(1, -1);  x_110 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_37: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_36);  y_36 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_38: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_37, 0.5, False, False);  y_37 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_111: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_106 + y_38;  x_106 = y_38 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:129 in forward, code: return x * x_mask
+        x_112: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_111 * x_mask;  x_111 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:70 in forward, code: x = self.proj(x) * x_mask
+        l__self____export_root_dp_proj_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_proj_weight
+        l__self____export_root_dp_proj_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_proj_bias
+        conv1d_44: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(x_112, l__self____export_root_dp_proj_weight, l__self____export_root_dp_proj_bias, (1,), (0,), (1,), 1);  x_112 = l__self____export_root_dp_proj_weight = l__self____export_root_dp_proj_bias = None
+        x_113: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = conv1d_44 * x_mask;  conv1d_44 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py:111 in forward, code: z = torch.randn(x.size(0), 2, x.size(2)).type_as(x) * noise_scale
+        size_31: "Sym(s27)" = x_113.size(0)
+        size_32: "Sym(s11)" = x_113.size(2)
+        randn: "f32[s27, 2, s11][2*s11, s11, 1]cpu" = torch.randn(size_31, 2, size_32);  size_31 = size_32 = None
+        type_as_1: "f32[s27, 2, s11][2*s11, s11, 1]cpu" = randn.type_as(x_113);  randn = None
+        z: "f32[s27, 2, s11][2*s11, s11, 1]cpu" = type_as_1 * noise_scale_w;  type_as_1 = noise_scale_w = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:386 in forward, code: x = torch.flip(x, [1])
+        x_114: "f32[s27, 2, s11][2*s11, s11, 1]cpu" = torch.flip(z, [1]);  z = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:497 in forward, code: x0, x1 = torch.split(x, [self.half_channels] * 2, 1)
+        split_1 = torch.functional.split(x_114, [1, 1], 1);  x_114 = None
+        x0: "f32[s27, 1, s11][2*s11, s11, 1]cpu" = split_1[0]
+        x1: "f32[s27, 1, s11][2*s11, s11, 1]cpu" = split_1[1];  split_1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:498 in forward, code: h = self.pre(x0)
+        l__self____export_root_dp_flows_7_pre_weight: "f32[192, 1, 1][1, 1, 1]cpu" = self.L__self____export_root_dp_flows_7_pre_weight
+        l__self____export_root_dp_flows_7_pre_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_pre_bias
+        h: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(x0, l__self____export_root_dp_flows_7_pre_weight, l__self____export_root_dp_flows_7_pre_bias, (1,), (0,), (1,), 1);  l__self____export_root_dp_flows_7_pre_weight = l__self____export_root_dp_flows_7_pre_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:119 in forward, code: x = x + g
+        x_115: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = h + x_113;  h = x_113 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_78: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_115 * x_mask
+        l__self____export_root_dp_flows_7_convs_convs_sep_0_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_0_weight
+        l__self____export_root_dp_flows_7_convs_convs_sep_0_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_0_bias
+        y_39: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_78, l__self____export_root_dp_flows_7_convs_convs_sep_0_weight, l__self____export_root_dp_flows_7_convs_convs_sep_0_bias, (1,), (1,), (1,), 192);  mul_78 = l__self____export_root_dp_flows_7_convs_convs_sep_0_weight = l__self____export_root_dp_flows_7_convs_convs_sep_0_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_116: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_39.transpose(1, -1);  y_39 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_1_0_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_0_gamma
+        l__self____export_root_dp_flows_7_convs_norms_1_0_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_0_beta
+        x_117: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_116, (192,), l__self____export_root_dp_flows_7_convs_norms_1_0_gamma, l__self____export_root_dp_flows_7_convs_norms_1_0_beta, 1e-05);  x_116 = l__self____export_root_dp_flows_7_convs_norms_1_0_gamma = l__self____export_root_dp_flows_7_convs_norms_1_0_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_40: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_117.transpose(1, -1);  x_117 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_41: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_40);  y_40 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_flows_7_convs_convs_1x1_0_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_0_weight
+        l__self____export_root_dp_flows_7_convs_convs_1x1_0_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_0_bias
+        y_42: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_41, l__self____export_root_dp_flows_7_convs_convs_1x1_0_weight, l__self____export_root_dp_flows_7_convs_convs_1x1_0_bias, (1,), (0,), (1,), 1);  y_41 = l__self____export_root_dp_flows_7_convs_convs_1x1_0_weight = l__self____export_root_dp_flows_7_convs_convs_1x1_0_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_118: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_42.transpose(1, -1);  y_42 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_2_0_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_0_gamma
+        l__self____export_root_dp_flows_7_convs_norms_2_0_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_0_beta
+        x_119: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_118, (192,), l__self____export_root_dp_flows_7_convs_norms_2_0_gamma, l__self____export_root_dp_flows_7_convs_norms_2_0_beta, 1e-05);  x_118 = l__self____export_root_dp_flows_7_convs_norms_2_0_gamma = l__self____export_root_dp_flows_7_convs_norms_2_0_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_43: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_119.transpose(1, -1);  x_119 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_44: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_43);  y_43 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_45: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_44, 0.0, False, False);  y_44 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_120: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_115 + y_45;  x_115 = y_45 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_79: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_120 * x_mask
+        l__self____export_root_dp_flows_7_convs_convs_sep_1_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_1_weight
+        l__self____export_root_dp_flows_7_convs_convs_sep_1_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_1_bias
+        y_46: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_79, l__self____export_root_dp_flows_7_convs_convs_sep_1_weight, l__self____export_root_dp_flows_7_convs_convs_sep_1_bias, (1,), (3,), (3,), 192);  mul_79 = l__self____export_root_dp_flows_7_convs_convs_sep_1_weight = l__self____export_root_dp_flows_7_convs_convs_sep_1_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_121: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_46.transpose(1, -1);  y_46 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_1_1_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_1_gamma
+        l__self____export_root_dp_flows_7_convs_norms_1_1_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_1_beta
+        x_122: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_121, (192,), l__self____export_root_dp_flows_7_convs_norms_1_1_gamma, l__self____export_root_dp_flows_7_convs_norms_1_1_beta, 1e-05);  x_121 = l__self____export_root_dp_flows_7_convs_norms_1_1_gamma = l__self____export_root_dp_flows_7_convs_norms_1_1_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_47: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_122.transpose(1, -1);  x_122 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_48: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_47);  y_47 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_flows_7_convs_convs_1x1_1_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_1_weight
+        l__self____export_root_dp_flows_7_convs_convs_1x1_1_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_1_bias
+        y_49: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_48, l__self____export_root_dp_flows_7_convs_convs_1x1_1_weight, l__self____export_root_dp_flows_7_convs_convs_1x1_1_bias, (1,), (0,), (1,), 1);  y_48 = l__self____export_root_dp_flows_7_convs_convs_1x1_1_weight = l__self____export_root_dp_flows_7_convs_convs_1x1_1_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_123: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_49.transpose(1, -1);  y_49 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_2_1_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_1_gamma
+        l__self____export_root_dp_flows_7_convs_norms_2_1_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_1_beta
+        x_124: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_123, (192,), l__self____export_root_dp_flows_7_convs_norms_2_1_gamma, l__self____export_root_dp_flows_7_convs_norms_2_1_beta, 1e-05);  x_123 = l__self____export_root_dp_flows_7_convs_norms_2_1_gamma = l__self____export_root_dp_flows_7_convs_norms_2_1_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_50: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_124.transpose(1, -1);  x_124 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_51: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_50);  y_50 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_52: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_51, 0.0, False, False);  y_51 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_125: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_120 + y_52;  x_120 = y_52 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:121 in forward, code: y = self.convs_sep[i](x * x_mask)
+        mul_80: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_125 * x_mask
+        l__self____export_root_dp_flows_7_convs_convs_sep_2_weight: "f32[192, 1, 3][3, 3, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_2_weight
+        l__self____export_root_dp_flows_7_convs_convs_sep_2_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_sep_2_bias
+        y_53: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(mul_80, l__self____export_root_dp_flows_7_convs_convs_sep_2_weight, l__self____export_root_dp_flows_7_convs_convs_sep_2_bias, (1,), (9,), (9,), 192);  mul_80 = l__self____export_root_dp_flows_7_convs_convs_sep_2_weight = l__self____export_root_dp_flows_7_convs_convs_sep_2_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_126: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_53.transpose(1, -1);  y_53 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_1_2_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_2_gamma
+        l__self____export_root_dp_flows_7_convs_norms_1_2_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_1_2_beta
+        x_127: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_126, (192,), l__self____export_root_dp_flows_7_convs_norms_1_2_gamma, l__self____export_root_dp_flows_7_convs_norms_1_2_beta, 1e-05);  x_126 = l__self____export_root_dp_flows_7_convs_norms_1_2_gamma = l__self____export_root_dp_flows_7_convs_norms_1_2_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_54: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_127.transpose(1, -1);  x_127 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:123 in forward, code: y = F.gelu(y)
+        y_55: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_54);  y_54 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:124 in forward, code: y = self.convs_1x1[i](y)
+        l__self____export_root_dp_flows_7_convs_convs_1x1_2_weight: "f32[192, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_2_weight
+        l__self____export_root_dp_flows_7_convs_convs_1x1_2_bias: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_convs_1x1_2_bias
+        y_56: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = torch.conv1d(y_55, l__self____export_root_dp_flows_7_convs_convs_1x1_2_weight, l__self____export_root_dp_flows_7_convs_convs_1x1_2_bias, (1,), (0,), (1,), 1);  y_55 = l__self____export_root_dp_flows_7_convs_convs_1x1_2_weight = l__self____export_root_dp_flows_7_convs_convs_1x1_2_bias = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:24 in forward, code: x = x.transpose(1, -1)
+        x_128: "f32[s27, s11, 192][192*s11, 1, s11]cpu" = y_56.transpose(1, -1);  y_56 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:25 in forward, code: x = F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps)
+        l__self____export_root_dp_flows_7_convs_norms_2_2_gamma: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_2_gamma
+        l__self____export_root_dp_flows_7_convs_norms_2_2_beta: "f32[192][1]cpu" = self.L__self____export_root_dp_flows_7_convs_norms_2_2_beta
+        x_129: "f32[s27, s11, 192][192*s11, 192, 1]cpu" = torch.nn.functional.layer_norm(x_128, (192,), l__self____export_root_dp_flows_7_convs_norms_2_2_gamma, l__self____export_root_dp_flows_7_convs_norms_2_2_beta, 1e-05);  x_128 = l__self____export_root_dp_flows_7_convs_norms_2_2_gamma = l__self____export_root_dp_flows_7_convs_norms_2_2_beta = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:26 in forward, code: return x.transpose(1, -1)
+        y_57: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = x_129.transpose(1, -1);  x_129 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:126 in forward, code: y = F.gelu(y)
+        y_58: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch._C._nn.gelu(y_57);  y_57 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:127 in forward, code: y = self.drop(y)
+        y_59: "f32[s27, 192, s11][192*s11, 1, 192]cpu" = torch.nn.functional.dropout(y_58, 0.0, False, False);  y_58 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:128 in forward, code: x = x + y
+        x_130: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_125 + y_59;  x_125 = y_59 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:129 in forward, code: return x * x_mask
+        h_1: "f32[s27, 192, s11][192*s11, s11, 1]cpu" = x_130 * x_mask;  x_130 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:500 in forward, code: h = self.proj(h) * x_mask
+        l__self____export_root_dp_flows_7_proj_weight: "f32[29, 192, 1][192, 1, 1]cpu" = self.L__self____export_root_dp_flows_7_proj_weight
+        l__self____export_root_dp_flows_7_proj_bias: "f32[29][1]cpu" = self.L__self____export_root_dp_flows_7_proj_bias
+        conv1d_52: "f32[s27, 29, s11][29*s11, s11, 1]cpu" = torch.conv1d(h_1, l__self____export_root_dp_flows_7_proj_weight, l__self____export_root_dp_flows_7_proj_bias, (1,), (0,), (1,), 1);  h_1 = l__self____export_root_dp_flows_7_proj_weight = l__self____export_root_dp_flows_7_proj_bias = None
+        h_2: "f32[s27, 29, s11][29*s11, s11, 1]cpu" = conv1d_52 * x_mask;  conv1d_52 = x_mask = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:502 in forward, code: b, c, t = x0.shape
+        size_33 = x0.size();  x0 = None
+        getitem_79: "Sym(s27)" = size_33[0]
+        getitem_80 = size_33[1];  getitem_80 = None
+        getitem_81: "Sym(s11)" = size_33[2];  size_33 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:503 in forward, code: h = h.reshape(b, c, -1, t).permute(0, 1, 3, 2)  # [b, cx?, t] -> [b, c, t, ?]
+        reshape: "f32[s27, 1, 29, s11][29*s11, 29*s11, s11, 1]cpu" = h_2.reshape(getitem_79, 1, -1, getitem_81);  h_2 = getitem_79 = getitem_81 = None
+        h_3: "f32[s27, 1, s11, 29][29*s11, 29*s11, 1, s11]cpu" = reshape.permute(0, 1, 3, 2);  reshape = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:505 in forward, code: unnormalized_widths = h[..., : self.num_bins] / math.sqrt(self.filter_channels)
+        getitem_82: "f32[s27, 1, s11, 10][29*s11, 29*s11, 1, s11]cpu" = h_3[(Ellipsis, slice(None, 10, None))]
+        unnormalized_widths: "f32[s27, 1, s11, 10][10*s11, 10*s11, 1, s11]cpu" = getitem_82 / 13.856406460551018;  getitem_82 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:506 in forward, code: unnormalized_heights = h[..., self.num_bins : 2 * self.num_bins] / math.sqrt(
+        getitem_83: "f32[s27, 1, s11, 10][29*s11, 29*s11, 1, s11]cpu" = h_3[(Ellipsis, slice(10, 20, None))]
+        unnormalized_heights: "f32[s27, 1, s11, 10][10*s11, 10*s11, 1, s11]cpu" = getitem_83 / 13.856406460551018;  getitem_83 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py:509 in forward, code: unnormalized_derivatives = h[..., 2 * self.num_bins :]
+        unnormalized_derivatives: "f32[s27, 1, s11, 9][29*s11, 29*s11, 1, s11]cpu" = h_3[(Ellipsis, slice(20, None, None))];  h_3 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:62 in unconstrained_rational_quadratic_spline, code: inside_interval_mask = (inputs >= -tail_bound) & (inputs <= tail_bound)
+        ge: "b8[s27, 1, s11][s11, s11, 1]cpu" = x1 >= -5.0
+        le: "b8[s27, 1, s11][s11, s11, 1]cpu" = x1 <= 5.0
+        inside_interval_mask: "b8[s27, 1, s11][s11, s11, 1]cpu" = ge & le;  ge = le = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:63 in unconstrained_rational_quadratic_spline, code: outside_interval_mask = ~inside_interval_mask
+        outside_interval_mask: "b8[s27, 1, s11][s11, s11, 1]cpu" = ~inside_interval_mask
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:65 in unconstrained_rational_quadratic_spline, code: outputs = torch.zeros_like(inputs)
+        outputs: "f32[s27, 1, s11][s11, s11, 1]cpu" = torch.zeros_like(x1)
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:66 in unconstrained_rational_quadratic_spline, code: logabsdet = torch.zeros_like(inputs)
+        logabsdet: "f32[s27, 1, s11][s11, s11, 1]cpu" = torch.zeros_like(x1)
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        unnormalized_derivatives_1: "f32[s27, 1, s11, 11][11*s11, 11*s11, 11, 1]cpu" = torch._C._nn.pad(unnormalized_derivatives, (1, 1), 'constant', None);  unnormalized_derivatives = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:70 in unconstrained_rational_quadratic_spline, code: constant = np.log(np.exp(1 - min_derivative) - 1)
+        wrapped_exp: "f64[][]cpu" = torch__dynamo_utils_wrapped_exp(0.999)
+        wrapped_sub: "f64[][]cpu" = torch__dynamo_utils_wrapped_sub(wrapped_exp, 1);  wrapped_exp = None
+        constant: "f64[][]cpu" = torch__dynamo_utils_wrapped_log(wrapped_sub);  wrapped_sub = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:71 in unconstrained_rational_quadratic_spline, code: unnormalized_derivatives[..., 0] = constant
+        unnormalized_derivatives_1[(Ellipsis, 0)] = constant;  setitem = unnormalized_derivatives_1;  setitem = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:73 in unconstrained_rational_quadratic_spline, code: unnormalized_derivatives[..., unnormalized_derivatives.size(-1) - 1] = constant
+        unnormalized_derivatives_1[(Ellipsis, 10)] = constant;  setitem_1 = unnormalized_derivatives_1;  constant = setitem_1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:75 in unconstrained_rational_quadratic_spline, code: outputs[outside_interval_mask] = inputs[outside_interval_mask]
+        getitem_85: "f32[u12][1]cpu" = x1[outside_interval_mask]
+        outputs[outside_interval_mask] = getitem_85;  setitem_2 = outputs;  outputs = getitem_85 = setitem_2 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:76 in unconstrained_rational_quadratic_spline, code: logabsdet[outside_interval_mask] = 0
+        logabsdet[outside_interval_mask] = 0;  setitem_3 = logabsdet;  logabsdet = outside_interval_mask = setitem_3 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:84 in unconstrained_rational_quadratic_spline, code: inputs=inputs[inside_interval_mask],
+        getitem_86: "f32[u13][1]cpu" = x1[inside_interval_mask];  x1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:85 in unconstrained_rational_quadratic_spline, code: unnormalized_widths=unnormalized_widths[inside_interval_mask, :],
+        getitem_87: "f32[u13, 10][10, 1]cpu" = unnormalized_widths[(inside_interval_mask, slice(None, None, None))];  unnormalized_widths = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:86 in unconstrained_rational_quadratic_spline, code: unnormalized_heights=unnormalized_heights[inside_interval_mask, :],
+        getitem_88: "f32[u13, 10][10, 1]cpu" = unnormalized_heights[(inside_interval_mask, slice(None, None, None))];  unnormalized_heights = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:87 in unconstrained_rational_quadratic_spline, code: unnormalized_derivatives=unnormalized_derivatives[inside_interval_mask, :],
+        getitem_89: "f32[u13, 11][11, 1]cpu" = unnormalized_derivatives_1[(inside_interval_mask, slice(None, None, None))];  unnormalized_derivatives_1 = inside_interval_mask = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:118 in rational_quadratic_spline, code: num_bins = unnormalized_widths.shape[-1]
+        size_34 = getitem_87.size()
+        getitem_90: "Sym(u13)" = size_34[0];  getitem_90 = None
+        getitem_91 = size_34[1];  size_34 = getitem_91 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:125 in rational_quadratic_spline, code: widths = F.softmax(unnormalized_widths, dim=-1)
+        widths: "f32[u13, 10][10, 1]cpu" = torch.nn.functional.softmax(getitem_87, dim = -1);  getitem_87 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:126 in rational_quadratic_spline, code: widths = min_bin_width + (1 - min_bin_width * num_bins) * widths
+        mul_83: "f32[u13, 10][10, 1]cpu" = 0.99 * widths;  widths = None
+        widths_1: "f32[u13, 10][10, 1]cpu" = 0.001 + mul_83;  mul_83 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:127 in rational_quadratic_spline, code: cumwidths = torch.cumsum(widths, dim=-1)
+        cumwidths: "f32[u13, 10][10, 1]cpu" = torch.cumsum(widths_1, dim = -1);  widths_1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        cumwidths_1: "f32[u13, 11][11, 1]cpu" = torch._C._nn.pad(cumwidths, (1, 0), 'constant', 0.0);  cumwidths = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:129 in rational_quadratic_spline, code: cumwidths = (right - left) * cumwidths + left
+        mul_84: "f32[u13, 11][11, 1]cpu" = 10.0 * cumwidths_1;  cumwidths_1 = None
+        cumwidths_2: "f32[u13, 11][11, 1]cpu" = mul_84 + -5.0;  mul_84 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:130 in rational_quadratic_spline, code: cumwidths[..., 0] = left
+        cumwidths_2[(Ellipsis, 0)] = -5.0;  setitem_4 = cumwidths_2;  setitem_4 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:132 in rational_quadratic_spline, code: cumwidths[..., cumwidths.size(-1) - 1] = right
+        cumwidths_2[(Ellipsis, 10)] = 5.0;  setitem_5 = cumwidths_2;  setitem_5 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:133 in rational_quadratic_spline, code: widths = cumwidths[..., 1:] - cumwidths[..., :-1]
+        getitem_92: "f32[u13, 10][11, 1]cpu" = cumwidths_2[(Ellipsis, slice(1, None, None))]
+        getitem_93: "f32[u13, 10][11, 1]cpu" = cumwidths_2[(Ellipsis, slice(None, -1, None))]
+        widths_2: "f32[u13, 10][10, 1]cpu" = getitem_92 - getitem_93;  getitem_92 = getitem_93 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:135 in rational_quadratic_spline, code: derivatives = min_derivative + F.softplus(unnormalized_derivatives)
+        softplus: "f32[u13, 11][11, 1]cpu" = torch._C._nn.softplus(getitem_89);  getitem_89 = None
+        derivatives: "f32[u13, 11][11, 1]cpu" = 0.001 + softplus;  softplus = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:137 in rational_quadratic_spline, code: heights = F.softmax(unnormalized_heights, dim=-1)
+        heights: "f32[u13, 10][10, 1]cpu" = torch.nn.functional.softmax(getitem_88, dim = -1);  getitem_88 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:138 in rational_quadratic_spline, code: heights = min_bin_height + (1 - min_bin_height * num_bins) * heights
+        mul_85: "f32[u13, 10][10, 1]cpu" = 0.99 * heights;  heights = None
+        heights_1: "f32[u13, 10][10, 1]cpu" = 0.001 + mul_85;  mul_85 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:139 in rational_quadratic_spline, code: cumheights = torch.cumsum(heights, dim=-1)
+        cumheights: "f32[u13, 10][10, 1]cpu" = torch.cumsum(heights_1, dim = -1);  heights_1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/functional.py:5418 in pad, code: return torch._C._nn.pad(input, pad, mode, value)
+        cumheights_1: "f32[u13, 11][11, 1]cpu" = torch._C._nn.pad(cumheights, (1, 0), 'constant', 0.0);  cumheights = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:141 in rational_quadratic_spline, code: cumheights = (top - bottom) * cumheights + bottom
+        mul_86: "f32[u13, 11][11, 1]cpu" = 10.0 * cumheights_1;  cumheights_1 = None
+        cumheights_2: "f32[u13, 11][11, 1]cpu" = mul_86 + -5.0;  mul_86 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:142 in rational_quadratic_spline, code: cumheights[..., 0] = bottom
+        cumheights_2[(Ellipsis, 0)] = -5.0;  setitem_6 = cumheights_2;  setitem_6 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:144 in rational_quadratic_spline, code: cumheights[..., cumheights.size(-1) - 1] = top
+        cumheights_2[(Ellipsis, 10)] = 5.0;  setitem_7 = cumheights_2;  setitem_7 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:145 in rational_quadratic_spline, code: heights = cumheights[..., 1:] - cumheights[..., :-1]
+        getitem_94: "f32[u13, 10][11, 1]cpu" = cumheights_2[(Ellipsis, slice(1, None, None))]
+        getitem_95: "f32[u13, 10][11, 1]cpu" = cumheights_2[(Ellipsis, slice(None, -1, None))]
+        heights_2: "f32[u13, 10][10, 1]cpu" = getitem_94 - getitem_95;  getitem_94 = getitem_95 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:46 in searchsorted, code: bin_locations[..., bin_locations.size(-1) - 1] += eps
+        getitem_96: "f32[u13][11]cpu" = cumheights_2[(Ellipsis, 10)]
+        getitem_96 += 1e-06;  iadd: "f32[u13][11]cpu" = getitem_96;  getitem_96 = None
+        cumheights_2[(Ellipsis, 10)] = iadd;  setitem_8 = cumheights_2;  iadd = setitem_8 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:47 in searchsorted, code: return torch.sum(inputs[..., None] >= bin_locations, dim=-1) - 1
+        getitem_97: "f32[u13, 1][1, 1]cpu" = getitem_86[(Ellipsis, None)]
+        ge_1: "b8[u13, 11][11, 1]cpu" = getitem_97 >= cumheights_2;  getitem_97 = None
+        sum_1: "i64[u13][1]cpu" = torch.sum(ge_1, dim = -1);  ge_1 = None
+        sub_68: "i64[u13][1]cpu" = sum_1 - 1;  sum_1 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:148 in rational_quadratic_spline, code: bin_idx = searchsorted(cumheights, inputs)[..., None]
+        bin_idx: "i64[u13, 1][1, 1]cpu" = sub_68[(Ellipsis, None)];  sub_68 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:152 in rational_quadratic_spline, code: input_cumwidths = cumwidths.gather(-1, bin_idx)[..., 0]
+        gather: "f32[u13, 1][1, 1]cpu" = cumwidths_2.gather(-1, bin_idx);  cumwidths_2 = None
+        input_cumwidths: "f32[u13][1]cpu" = gather[(Ellipsis, 0)];  gather = input_cumwidths = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:153 in rational_quadratic_spline, code: input_bin_widths = widths.gather(-1, bin_idx)[..., 0]
+        gather_1: "f32[u13, 1][1, 1]cpu" = widths_2.gather(-1, bin_idx)
+        input_bin_widths: "f32[u13][1]cpu" = gather_1[(Ellipsis, 0)];  gather_1 = input_bin_widths = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:155 in rational_quadratic_spline, code: input_cumheights = cumheights.gather(-1, bin_idx)[..., 0]
+        gather_2: "f32[u13, 1][1, 1]cpu" = cumheights_2.gather(-1, bin_idx);  cumheights_2 = None
+        input_cumheights: "f32[u13][1]cpu" = gather_2[(Ellipsis, 0)];  gather_2 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:156 in rational_quadratic_spline, code: delta = heights / widths
+        delta: "f32[u13, 10][10, 1]cpu" = heights_2 / widths_2;  widths_2 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:157 in rational_quadratic_spline, code: input_delta = delta.gather(-1, bin_idx)[..., 0]
+        gather_3: "f32[u13, 1][1, 1]cpu" = delta.gather(-1, bin_idx);  delta = None
+        input_delta: "f32[u13][1]cpu" = gather_3[(Ellipsis, 0)];  gather_3 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:159 in rational_quadratic_spline, code: input_derivatives = derivatives.gather(-1, bin_idx)[..., 0]
+        gather_4: "f32[u13, 1][1, 1]cpu" = derivatives.gather(-1, bin_idx)
+        input_derivatives: "f32[u13][1]cpu" = gather_4[(Ellipsis, 0)];  gather_4 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:160 in rational_quadratic_spline, code: input_derivatives_plus_one = derivatives[..., 1:].gather(-1, bin_idx)[..., 0]
+        getitem_104: "f32[u13, 10][11, 1]cpu" = derivatives[(Ellipsis, slice(1, None, None))];  derivatives = None
+        gather_5: "f32[u13, 1][1, 1]cpu" = getitem_104.gather(-1, bin_idx);  getitem_104 = None
+        input_derivatives_plus_one: "f32[u13][1]cpu" = gather_5[(Ellipsis, 0)];  gather_5 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:162 in rational_quadratic_spline, code: input_heights = heights.gather(-1, bin_idx)[..., 0]
+        gather_6: "f32[u13, 1][1, 1]cpu" = heights_2.gather(-1, bin_idx);  heights_2 = bin_idx = None
+        input_heights: "f32[u13][1]cpu" = gather_6[(Ellipsis, 0)];  gather_6 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:165 in rational_quadratic_spline, code: a = (inputs - input_cumheights) * (
+        sub_69: "f32[u13][1]cpu" = getitem_86 - input_cumheights
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:166 in rational_quadratic_spline, code: input_derivatives + input_derivatives_plus_one - 2 * input_delta
+        add_60: "f32[u13][1]cpu" = input_derivatives + input_derivatives_plus_one
+        mul_87: "f32[u13][1]cpu" = 2 * input_delta
+        sub_70: "f32[u13][1]cpu" = add_60 - mul_87;  add_60 = mul_87 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:165 in rational_quadratic_spline, code: a = (inputs - input_cumheights) * (
+        mul_88: "f32[u13][1]cpu" = sub_69 * sub_70;  sub_69 = sub_70 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:167 in rational_quadratic_spline, code: ) + input_heights * (input_delta - input_derivatives)
+        sub_71: "f32[u13][1]cpu" = input_delta - input_derivatives
+        mul_89: "f32[u13][1]cpu" = input_heights * sub_71;  sub_71 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:165 in rational_quadratic_spline, code: a = (inputs - input_cumheights) * (
+        a: "f32[u13][1]cpu" = mul_88 + mul_89;  mul_88 = mul_89 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:168 in rational_quadratic_spline, code: b = input_heights * input_derivatives - (inputs - input_cumheights) * (
+        mul_90: "f32[u13][1]cpu" = input_heights * input_derivatives;  input_heights = None
+        sub_72: "f32[u13][1]cpu" = getitem_86 - input_cumheights
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:169 in rational_quadratic_spline, code: input_derivatives + input_derivatives_plus_one - 2 * input_delta
+        add_62: "f32[u13][1]cpu" = input_derivatives + input_derivatives_plus_one;  input_derivatives = input_derivatives_plus_one = None
+        mul_91: "f32[u13][1]cpu" = 2 * input_delta
+        sub_73: "f32[u13][1]cpu" = add_62 - mul_91;  add_62 = mul_91 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:168 in rational_quadratic_spline, code: b = input_heights * input_derivatives - (inputs - input_cumheights) * (
+        mul_92: "f32[u13][1]cpu" = sub_72 * sub_73;  sub_72 = sub_73 = None
+        b: "f32[u13][1]cpu" = mul_90 - mul_92;  mul_90 = mul_92 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:171 in rational_quadratic_spline, code: c = -input_delta * (inputs - input_cumheights)
+        neg: "f32[u13][1]cpu" = -input_delta;  input_delta = None
+        sub_75: "f32[u13][1]cpu" = getitem_86 - input_cumheights;  getitem_86 = input_cumheights = None
+        c: "f32[u13][1]cpu" = neg * sub_75;  neg = sub_75 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:173 in rational_quadratic_spline, code: discriminant = b.pow(2) - 4 * a * c
+        pow_1: "f32[u13][1]cpu" = b.pow(2);  b = None
+        mul_94: "f32[u13][1]cpu" = 4 * a;  a = None
+        mul_95: "f32[u13][1]cpu" = mul_94 * c;  mul_94 = c = None
+        discriminant: "f32[u13][1]cpu" = pow_1 - mul_95;  pow_1 = mul_95 = None
+        
+        # File: /workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py:174 in rational_quadratic_spline, code: assert (discriminant >= 0).all(), discriminant
+        ge_2: "b8[u13][1]cpu" = discriminant >= 0;  discriminant = None
+        all_1: "b8[][]cpu" = ge_2.all();  ge_2 = all_1 = None
+        
+Traceback (most recent call last):
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/_internal/exporter/_capture_strategies.py", line 121, in __call__
+    exported_program = self._capture(model, args, kwargs, dynamic_shapes)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/_internal/exporter/_capture_strategies.py", line 219, in _capture
+    return torch.export.export(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/__init__.py", line 311, in export
+    raise e
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/__init__.py", line 277, in export
+    return _export(
+           ^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1271, in wrapper
+    raise e
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1237, in wrapper
+    ep = fn(*args, **kwargs)
+         ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/exported_program.py", line 124, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 2377, in _export
+    ep = _export_for_training(
+         ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1271, in wrapper
+    raise e
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1237, in wrapper
+    ep = fn(*args, **kwargs)
+         ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/exported_program.py", line 124, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 2185, in _export_for_training
+    export_artifact = export_func(
+                      ^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 2116, in _non_strict_export
+    aten_export_artifact = _to_aten_func(
+                           ^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1904, in _export_to_aten_ir_make_fx
+    gm, graph_signature = transform(_make_fx_helper)(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 2034, in _aot_export_non_strict
+    gm, sig = aot_export(stack, wrapped_mod, args, kwargs=kwargs, **flags)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1816, in _make_fx_helper
+    gm = make_fx(
+         ^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2701, in wrapped
+    return make_fx_tracer.trace(f, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2626, in trace
+    return self._trace_inner(f, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2588, in _trace_inner
+    t = dispatch_trace(
+        ^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/_compile.py", line 54, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1180, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 1460, in dispatch_trace
+    graph = tracer.trace(root, concrete_args)  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2177, in trace
+    res = super().trace(root, concrete_args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 879, in trace
+    (self.create_arg(fn(*args)),),
+                     ^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 1526, in wrapped
+    out = f(*tensors)  # type:ignore[call-arg]
+          ^^^^^^^^^^^
+  File "<string>", line 1, in <lambda>
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 1703, in wrapped_fn
+    return tuple(flat_fn(*args))
+                 ^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 193, in flat_fn
+    tree_out = fn(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 1377, in functional_call
+    out = mod(*args[params_len:], **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 853, in module_call_wrapper
+    return self.call_module(mod, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2264, in call_module
+    return Tracer.call_module(self, m, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 569, in call_module
+    ret_val = forward(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 846, in forward
+    return _orig_module_call(mod, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/export/_trace.py", line 2018, in forward
+    tree_out = mod(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 853, in module_call_wrapper
+    return self.call_module(mod, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2264, in call_module
+    return Tracer.call_module(self, m, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 569, in call_module
+    ret_val = forward(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 846, in forward
+    return _orig_module_call(mod, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/export_onnx.py", line 61, in infer_forward
+    audio = model_g.infer(
+            ^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py", line 701, in infer
+    logw = self.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 853, in module_call_wrapper
+    return self.call_module(mod, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2264, in call_module
+    return Tracer.call_module(self, m, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 569, in call_module
+    ret_val = forward(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 846, in forward
+    return _orig_module_call(mod, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/models.py", line 114, in forward
+    z = flow(z, x_mask, g=x, reverse=reverse)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 853, in module_call_wrapper
+    return self.call_module(mod, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 2264, in call_module
+    return Tracer.call_module(self, m, forward, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 569, in call_module
+    ret_val = forward(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/_symbolic_trace.py", line 846, in forward
+    return _orig_module_call(mod, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/modules.py", line 511, in forward
+    x1, logabsdet = piecewise_rational_quadratic_transform(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py", line 30, in piecewise_rational_quadratic_transform
+    outputs, logabsdet = spline_fn(
+                         ^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py", line 83, in unconstrained_rational_quadratic_spline
+    ) = rational_quadratic_spline(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py", line 174, in rational_quadratic_spline
+    assert (discriminant >= 0).all(), discriminant
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 1577, in __torch_function__
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py", line 1648, in __torch_function__
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/_export/non_strict_utils.py", line 1139, in __torch_function__
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/sym_node.py", line 541, in guard_bool
+    r = self.evaluate()
+        ^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/sym_node.py", line 515, in evaluate
+    return self.shape_env.evaluate_sym_node(self, size_oblivious)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/symbolic_shapes.py", line 7318, in evaluate_sym_node
+    return self.evaluate_expr(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/symbolic_shapes.py", line 7413, in evaluate_expr
+    return self._inner_evaluate_expr(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/recording.py", line 273, in wrapper
+    return retlog(fn(*args, **kwargs))
+                  ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/symbolic_shapes.py", line 7436, in _inner_evaluate_expr
+    return self._evaluate_expr(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/fx/experimental/symbolic_shapes.py", line 7655, in _evaluate_expr
+    raise self._make_data_dependent_error(
+torch.fx.experimental.symbolic_shapes.GuardOnDataDependentSymNode: Could not guard on data-dependent expression Eq(u14, 1) (unhinted: Eq(u14, 1)).  (Size-like symbols: none)
+
+consider using data-dependent friendly APIs such as guard_or_false, guard_or_true and statically_known_true.
+Caused by: (_export/non_strict_utils.py:1139 in __torch_function__)
+For more information, run with TORCH_LOGS="dynamic"
+For extended logs when we create symbols, also add TORCHDYNAMO_EXTENDED_DEBUG_CREATE_SYMBOL="u14"
+If you suspect the guard was triggered from C++, add TORCHDYNAMO_EXTENDED_DEBUG_CPP=1
+For more debugging help, see https://docs.google.com/document/d/1HSuTTVvYH1pTew89Rtpeu84Ht3nQEFTYhAX3Ypa_xJs/edit?usp=sharing
+
+For C++ stack trace, run with TORCHDYNAMO_EXTENDED_DEBUG_CPP=1
+
+The following call raised this error:
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py", line 174, in rational_quadratic_spline
+    assert (discriminant >= 0).all(), discriminant
+
+
+The error above occurred when calling torch.export.export. If you would like to view some more information about this error, and get a list of all other errors that may occur in your export call, you can replace your `export()` call with `draft_export()`.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/export_onnx.py", line 112, in <module>
+    main()
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/export_onnx.py", line 92, in main
+    torch.onnx.export(
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/__init__.py", line 296, in export
+    return _compat.export_compat(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/_internal/exporter/_compat.py", line 154, in export_compat
+    onnx_program = _core.export(
+                   ^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/_internal/exporter/_flags.py", line 27, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/piper_tamil/piper1-gpl/.venv/lib/python3.12/site-packages/torch/onnx/_internal/exporter/_core.py", line 1409, in export
+    raise _errors.TorchExportError(
+torch.onnx._internal.exporter._errors.TorchExportError: Failed to export the model with torch.export. This is step 1/3 of exporting the model to ONNX. Next steps:
+- Modify the model code for `torch.export.export` to succeed. Refer to https://pytorch.org/docs/stable/generated/exportdb/index.html for more information.
+- Debug `torch.export.export` and submit a PR to PyTorch.
+- Create an issue in the PyTorch GitHub repository against the *torch.export* component and attach the full error stack as well as reproduction scripts.
+
+## Exception summary
+
+<class 'torch.fx.experimental.symbolic_shapes.GuardOnDataDependentSymNode'>: Could not guard on data-dependent expression Eq(u14, 1) (unhinted: Eq(u14, 1)).  (Size-like symbols: none)
+
+consider using data-dependent friendly APIs such as guard_or_false, guard_or_true and statically_known_true.
+Caused by: (_export/non_strict_utils.py:1139 in __torch_function__)
+For more information, run with TORCH_LOGS="dynamic"
+For extended logs when we create symbols, also add TORCHDYNAMO_EXTENDED_DEBUG_CREATE_SYMBOL="u14"
+If you suspect the guard was triggered from C++, add TORCHDYNAMO_EXTENDED_DEBUG_CPP=1
+For more debugging help, see https://docs.google.com/document/d/1HSuTTVvYH1pTew89Rtpeu84Ht3nQEFTYhAX3Ypa_xJs/edit?usp=sharing
+
+For C++ stack trace, run with TORCHDYNAMO_EXTENDED_DEBUG_CPP=1
+
+The following call raised this error:
+  File "/workspace/piper_tamil/piper1-gpl/src/piper/train/vits/transforms.py", line 174, in rational_quadratic_spline
+    assert (discriminant >= 0).all(), discriminant
+
+
+The error above occurred when calling torch.export.export. If you would like to view some more information about this error, and get a list of all other errors that may occur in your export call, you can replace your `export()` call with `draft_export()`.
+
+(Refer to the full stack trace above for more information.)
+root@rocm-7-1-software-gpu-mi300x1-192gb-devcloud-atl1:~# 

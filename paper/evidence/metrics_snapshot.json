@@ -1,0 +1,180 @@
+{
+  "generated_at_utc": "2026-02-18T07:30:09+00:00Z",
+  "measurement_date": "2026-02-18",
+  "artifact_reliability": {
+    "webrtc_log": {
+      "offer_status": 200,
+      "answer_type": "answer",
+      "ice_final": "completed",
+      "ice_states": [
+        "checking",
+        "completed",
+        "closed"
+      ],
+      "inbound_audio_track": true,
+      "connected": true
+    },
+    "websocket_log": {
+      "connected": true,
+      "sent_speech_frames": 300,
+      "sent_silence_frames": 90,
+      "recv_total_events": 627,
+      "recv_media_events": 627,
+      "recv_non_media_events": 0,
+      "first_recv_event": "media",
+      "ws_closed_cleanly": true,
+      "error": null
+    }
+  },
+  "lid_timings": {
+    "source": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/Indian_Language_ID_Colab.ipynb",
+    "times_ms": [
+      193,
+      209,
+      587,
+      64,
+      482,
+      165,
+      220
+    ],
+    "stats_ms": {
+      "n": 7,
+      "mean": 274.2857142857143,
+      "median": 209.0,
+      "min": 64.0,
+      "max": 587.0,
+      "p95": 587.0
+    }
+  },
+  "voice_turn_examples": [
+    {
+      "source": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/voice_turn_en_1.json",
+      "ok": true,
+      "session_id": "wav-pipeline-test",
+      "language": "en",
+      "transcript": "Apologies, I couldn't find any information about your query.",
+      "response": "Arre, beta! (Oh dear!) Sorry about that. Could you please repeat or rephrase your question? I'll do my best to help in the English language since our conversation just started.\n\nIf you prefer, we could also switch to Hindi if that's more convenient for you. Just let me know which language you'd like to use from now on.",
+      "transcript_chars": 60,
+      "response_chars": 320,
+      "audio_mime": "audio/wav",
+      "audio_b64_len": 3080508,
+      "audio_decoded_bytes": 2310380,
+      "input_wav": {
+        "path": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/en_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 4.686
+      },
+      "output_wav": {
+        "path": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/pipeline_reply_en_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 24.066
+      }
+    },
+    {
+      "source": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/voice_turn_hi_1.json",
+      "ok": true,
+      "session_id": "wav-pipeline-test-hi",
+      "language": "hi",
+      "transcript": "नहीं दिली",
+      "response": "क्या कुछ और है जिसमें मैं आपकी मदद कर सकता हूँ?",
+      "transcript_chars": 9,
+      "response_chars": 47,
+      "audio_mime": "audio/wav",
+      "audio_b64_len": 596624,
+      "audio_decoded_bytes": 447468,
+      "input_wav": {
+        "path": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/hi_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 2.0513333333333335
+      },
+      "output_wav": {
+        "path": "/Users/jeevithg/Downloads/solvathon_layer1-main 3/gpu_wav_samples/pipeline_reply_hi_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 4.660666666666667
+      }
+    }
+  ],
+  "ollama_live_checks": {
+    "status": {
+      "base_url": "http://localhost:11434",
+      "model": "llama3.2:3b",
+      "server_running": true,
+      "models": [
+        "llama3.2:3b",
+        "nomic-embed-text:latest",
+        "llama3.2:1b"
+      ]
+    },
+    "prompt_runs": [
+      {
+        "prompt": "Translate 'Hello, how are you?' to Hindi.",
+        "ok": true,
+        "latency_ms": 18964.905583,
+        "response_chars": 479,
+        "response_preview": "The translation of \"Hello, how are you?\" in Hindi is:\n\nनमस्ते, आप कैसे हैं? (Namaste, aap kaise hain?)\n\nHere's a breakdown:\n\n* नमस्ते (Namaste) - Hello\n* आप (Aap) - You\n* कैसे हैं (Kaisa hain) - How are you?\n\nNote: In informal settings, you"
+      },
+      {
+        "prompt": "Translate 'Hello, how are you?' to Kannada.",
+        "ok": true,
+        "latency_ms": 8913.047708,
+        "response_chars": 236,
+        "response_preview": "The translation of \"Hello, how are you?\" in Kannada is:\n\n\"ನೆಮ್ಮದು ಎಷ್ಟು?\" (Nemmadu Eshtha?)\n\nHere's a breakdown of the translation:\n\n- ನೆಮ್ಮದು (Nemmadu) - Hello\n- ಎಷ್ಟು (Eshtha) - how are you?\n- ? (question mark) - indicating a question"
+      },
+      {
+        "prompt": "Translate 'Hello, how are you?' to Telugu.",
+        "ok": true,
+        "latency_ms": 14135.965417000001,
+        "response_chars": 394,
+        "response_preview": "The translation of \"Hello, how are you?\" in Telugu is:\n\nనాకు ఇంటివారం అయ్యా? (Naku intivārāṃ ayyā?)\n\nHere's a breakdown of the translation:\n\n* నాకు (Naku) - Hello\n* ఇంటివారం (Intivārāṃ) - How are you?\n* అయ్యా? (Ayayā?) - (Polite form of) I'"
+      },
+      {
+        "prompt": "Translate 'Hello, how are you?' to Tamil.",
+        "ok": true,
+        "latency_ms": 16880.324417000003,
+        "response_chars": 474,
+        "response_preview": "The translation of \"Hello, how are you?\" in Tamil is:\n\nவணக்கம் என்ன இருங்க? (Vaanakkam Enna Irung?)\n\nHere's a breakdown of the translation:\n\n- \"Hello\" can be translated to \"வணக்கம்\" (Vaanakam) which is a general greeting in Tamil.\n- \"How ar"
+      },
+      {
+        "prompt": "Write a short sentence in Kannada.",
+        "ok": true,
+        "latency_ms": 23440.916166999996,
+        "response_chars": 94,
+        "response_preview": "ಕೆಲವು ಸಂದರ್ಭಗಳಲ್ಲಿ, ತಪ್ಪಿನ ಶಬ್ದಕೋಶವು ಉಚ್ಚಾರಣೆಯ ಸಂದರ್ಭಗಳ ಮೇಲೆ ಹೊಂದಿರುತ್ತದೆ, ಪ್ರಾಥಮಿಕವಾಗಿ ನೋಡಲು."
+      }
+    ],
+    "stats_ms": {
+      "n": 5,
+      "mean": 16467.031858399998,
+      "median": 16880.324417000003,
+      "min": 8913.047708,
+      "max": 23440.916166999996,
+      "p95": 23440.916166999996
+    }
+  },
+  "pipeline_connectivity": {
+    "started_at_utc": "2026-02-18T07:31:31Z",
+    "command": "python3 /Users/jeevithg/Downloads/solvathon_layer1-main 3/test_pipeline.py --server http://localhost:8080",
+    "exit_code": 1,
+    "parsed_summary": {
+      "passed": 0,
+      "total": 6
+    },
+    "output": "\u001b[1m============================================================\u001b[0m\n\u001b[1mVoice AI Pipeline Connectivity Test\u001b[0m\n\u001b[1mServer: http://localhost:8080\u001b[0m\n\u001b[1m============================================================\u001b[0m\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Server Health Check\n  \u001b[91m✗\u001b[0m Failed to connect: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /healthz (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Model Readiness Check\n  \u001b[91m✗\u001b[0m Failed to check readiness: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ready (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m CORS Headers (cross-origin support)\n  \u001b[91m✗\u001b[0m CORS check failed: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /offer (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m ICE Server Configuration\n  \u001b[91m✗\u001b[0m Failed to get ICE config: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ice-config (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m WebRTC SDP Offer Exchange\n  \u001b[91m✗\u001b[0m SDP offer failed: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /offer (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Metrics Endpoint\n  \u001b[91m✗\u001b[0m Failed to get metrics: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /metrics (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))\n\n\u001b[1m============================================================\u001b[0m\n\u001b[93m\u001b[1m⚠ 0/6 tests passed (6 failed)\u001b[0m\n\n\u001b[91mCRITICAL: Server is not accessible or not running.\u001b[0m\n\n/Users/jeevithg/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn("
+  },
+  "redis_status": {
+    "command": "redis-cli -h localhost -p 6379 ping",
+    "exit_code": 0,
+    "stdout": "MISCONF Redis is configured to save RDB snapshots, but it's currently unable to persist to disk. Commands that may modify the data set are disabled, because this instance is configured to report errors during writes if RDB snapshotting fails (stop-writes-on-bgsave-error option). Please check the Redis logs for details about the RDB error.",
+    "stderr": "",
+    "misconf_detected": true
+  },
+  "data_splits_exists": false
+}

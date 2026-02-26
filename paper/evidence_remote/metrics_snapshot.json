@@ -1,0 +1,140 @@
+{
+  "generated_at_utc": "2026-02-18T07:28:26.442222Z",
+  "measurement_date": "2026-02-18",
+  "artifact_reliability": {
+    "webrtc_log": {
+      "offer_status": 200,
+      "answer_type": "answer",
+      "ice_final": "completed",
+      "ice_states": [
+        "checking",
+        "completed",
+        "closed"
+      ],
+      "inbound_audio_track": true,
+      "connected": true
+    },
+    "websocket_log": {
+      "connected": true,
+      "sent_speech_frames": 300,
+      "sent_silence_frames": 90,
+      "recv_total_events": 627,
+      "recv_media_events": 627,
+      "recv_non_media_events": 0,
+      "first_recv_event": "media",
+      "ws_closed_cleanly": true,
+      "error": null
+    }
+  },
+  "lid_timings": {
+    "source": "/root/solvathon_layer1-main/Indian_Language_ID_Colab.ipynb",
+    "times_ms": [
+      193,
+      209,
+      587,
+      64,
+      482,
+      165,
+      220
+    ],
+    "stats_ms": {
+      "n": 7,
+      "mean": 274.2857142857143,
+      "median": 209.0,
+      "min": 64.0,
+      "max": 587.0,
+      "p95": 587.0
+    }
+  },
+  "voice_turn_examples": [
+    {
+      "source": "/root/solvathon_layer1-main/gpu_wav_samples/voice_turn_en_1.json",
+      "ok": true,
+      "session_id": "wav-pipeline-test",
+      "language": "en",
+      "transcript": "Apologies, I couldn't find any information about your query.",
+      "response": "Arre, beta! (Oh dear!) Sorry about that. Could you please repeat or rephrase your question? I'll do my best to help in the English language since our conversation just started.\n\nIf you prefer, we could also switch to Hindi if that's more convenient for you. Just let me know which language you'd like to use from now on.",
+      "transcript_chars": 60,
+      "response_chars": 320,
+      "audio_mime": "audio/wav",
+      "audio_b64_len": 3080508,
+      "audio_decoded_bytes": 2310380,
+      "input_wav": {
+        "path": "/root/solvathon_layer1-main/gpu_wav_samples/en_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 4.686
+      },
+      "output_wav": {
+        "path": "/root/solvathon_layer1-main/gpu_wav_samples/pipeline_reply_en_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 24.066
+      }
+    },
+    {
+      "source": "/root/solvathon_layer1-main/gpu_wav_samples/voice_turn_hi_1.json",
+      "ok": true,
+      "session_id": "wav-pipeline-test-hi",
+      "language": "hi",
+      "transcript": "नहीं दिली",
+      "response": "क्या कुछ और है जिसमें मैं आपकी मदद कर सकता हूँ?",
+      "transcript_chars": 9,
+      "response_chars": 47,
+      "audio_mime": "audio/wav",
+      "audio_b64_len": 596624,
+      "audio_decoded_bytes": 447468,
+      "input_wav": {
+        "path": "/root/solvathon_layer1-main/gpu_wav_samples/hi_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 2.0513333333333335
+      },
+      "output_wav": {
+        "path": "/root/solvathon_layer1-main/gpu_wav_samples/pipeline_reply_hi_1.wav",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "bits_per_sample": 16,
+        "duration_s": 4.660666666666667
+      }
+    }
+  ],
+  "ollama_live_checks": {
+    "status": {
+      "base_url": "http://localhost:11434",
+      "model": "llama3.2:3b",
+      "server_running": false,
+      "error": "HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/tags (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x72f8d579f920>: Failed to establish a new connection: [Errno 111] Connection refused'))"
+    },
+    "prompt_runs": [],
+    "stats_ms": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "min": null,
+      "max": null,
+      "p95": null
+    }
+  },
+  "pipeline_connectivity": {
+    "started_at_utc": "2026-02-18T07:28:26.460054Z",
+    "command": "python3 /root/solvathon_layer1-main/test_pipeline.py --server http://localhost:8080",
+    "exit_code": 1,
+    "parsed_summary": {
+      "passed": 0,
+      "total": 6
+    },
+    "output": "\u001b[1m============================================================\u001b[0m\n\u001b[1mVoice AI Pipeline Connectivity Test\u001b[0m\n\u001b[1mServer: http://localhost:8080\u001b[0m\n\u001b[1m============================================================\u001b[0m\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Server Health Check\n  \u001b[91m✗\u001b[0m Failed to connect: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /healthz (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e0431a82900>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Model Readiness Check\n  \u001b[91m✗\u001b[0m Failed to check readiness: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ready (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e043116dfd0>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m CORS Headers (cross-origin support)\n  \u001b[91m✗\u001b[0m CORS check failed: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /offer (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e043116e810>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m ICE Server Configuration\n  \u001b[91m✗\u001b[0m Failed to get ICE config: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ice-config (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e043116ef60>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m WebRTC SDP Offer Exchange\n  \u001b[91m✗\u001b[0m SDP offer failed: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /offer (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e043116f650>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[94m\u001b[1mTesting:\u001b[0m Metrics Endpoint\n  \u001b[91m✗\u001b[0m Failed to get metrics: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e043116f2c0>: Failed to establish a new connection: [Errno 111] Connection refused'))\n\n\u001b[1m============================================================\u001b[0m\n\u001b[93m\u001b[1m⚠ 0/6 tests passed (6 failed)\u001b[0m\n\n\u001b[91mCRITICAL: Server is not accessible or not running.\u001b[0m"
+  },
+  "redis_status": {
+    "command": "redis-cli -h localhost -p 6379 ping",
+    "exit_code": null,
+    "stdout": "",
+    "stderr": "redis-cli not found",
+    "misconf_detected": false
+  },
+  "data_splits_exists": false
+}

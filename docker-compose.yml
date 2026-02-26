@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["gunicorn", "-k", "gevent", "-w", "1", "--worker-connections", "1000", "--timeout", "0", "-b", "0.0.0.0:8080", "src.realtime.signaling_server:app"]
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - PYTHONPATH=/app
+      - HF_HOME=${HF_HOME:-/root/.cache/huggingface}
+      - TORCH_HOME=${TORCH_HOME:-/root/.cache/torch}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/app/models
+      - ./src/tts/piper_models:/app/src/tts/piper_models
+      - ${HF_CACHE_DIR:-hf_cache}:/root/.cache/huggingface
+      - ${TORCH_CACHE_DIR:-torch_cache}:/root/.cache/torch
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+    security_opt:
+      - seccomp=unconfined
+    depends_on:
+      - ollama
+      - redis
+
+  ollama:
+    image: ollama/ollama:rocm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+    security_opt:
+      - seccomp=unconfined
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - app
+
+volumes:
+  ollama:
+  hf_cache:
+  torch_cache:

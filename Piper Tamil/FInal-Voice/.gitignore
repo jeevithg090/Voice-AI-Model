@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+
+# Local data/checkpoints
+tamil_female_mono/
+*.zip
+runs/
+cache/

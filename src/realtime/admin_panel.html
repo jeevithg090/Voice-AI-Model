@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Agent Admin</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #10203a;
+      --muted: #4e5d78;
+      --border: #d8e0ef;
+      --primary: #1b5fa7;
+      --success: #1f8f4f;
+      --warn: #b86f1f;
+      --danger: #b33a3a;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "SF Pro Text", "Helvetica Neue", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(140deg, #eef3fb, #f8fbff);
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 25px rgba(16, 32, 58, 0.05);
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 10px;
+      line-height: 1.2;
+    }
+
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1rem; }
+
+    .muted { color: var(--muted); font-size: 0.92rem; }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.86rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 9px 10px;
+      box-sizing: border-box;
+      font: inherit;
+    }
+
+    textarea { min-height: 84px; resize: vertical; }
+
+    button {
+      width: auto;
+      cursor: pointer;
+      color: #fff;
+      border: none;
+      background: var(--primary);
+    }
+
+    button.secondary { background: #465d80; }
+    button.warn { background: var(--warn); }
+    button.success { background: var(--success); }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+      max-height: 340px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+
+    .item .title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .item small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .turn {
+      border-left: 4px solid #c6d7f1;
+      padding: 8px 10px;
+      background: #f9fcff;
+      margin-bottom: 8px;
+    }
+
+    .turn.user { border-left-color: #4b77b8; }
+    .turn.assistant { border-left-color: #2f9a55; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      color: #fff;
+      background: #2f5d92;
+      border-radius: 6px;
+      padding: 2px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    pre {
+      background: #0f213f;
+      color: #eff6ff;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.8rem;
+      overflow: auto;
+    }
+
+    #status {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: 0;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: #fff;
+      background: #2f5d92;
+    }
+
+    @media (max-width: 760px) {
+      .grid2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Admin panel ready.</div>
+
+  <div class="container">
+    <section class="card full">
+      <h1>Voice Agent Admin Panel</h1>
+      <p class="muted">Customize agent behavior, activate templates, and inspect conversation transcript + recordings.</p>
+      <div id="activeAgent"></div>
+    </section>
+
+    <section class="card">
+      <h2>Templates</h2>
+      <div class="toolbar">
+        <button class="secondary" onclick="loadTemplates()">Refresh Templates</button>
+      </div>
+      <div class="list" id="templateList"></div>
+      <hr />
+      <h3>Create Template</h3>
+      <label>Name</label>
+      <input id="tplName" placeholder="Example: Banking Support" />
+      <label>Description</label>
+      <input id="tplDesc" placeholder="Purpose of this template" />
+      <label>Defaults (JSON)</label>
+      <textarea id="tplDefaults">{
+  "assistant_name": "Asha",
+  "tone": "calm",
+  "objective": "Resolve in minimum turns",
+  "temperature": 0.6,
+  "max_tokens": 240,
+  "similarity_threshold": 0.85
+}</textarea>
+      <label>System Prompt Template (use placeholders like {{assistant_name}})</label>
+      <textarea id="tplPrompt">You are {{assistant_name}}, a multilingual voice assistant for {{domain}}.
+Tone: {{tone}}.
+Objective: {{objective}}.
+Always respond in {{detected_language}} and keep answers short for speech.
+If unsure, offer human handover.</textarea>
+      <div class="row">
+        <button onclick="createTemplate()">Save Template</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Agents</h2>
+      <div class="toolbar">
+        <button class="secondary" onclick="loadAgents()">Refresh Agents</button>
+      </div>
+      <div class="list" id="agentList"></div>
+      <hr />
+      <h3>Create Agent</h3>
+      <label>Name</label>
+      <input id="agentName" placeholder="Example: Triage Agent v2" />
+      <label>Description</label>
+      <input id="agentDesc" placeholder="What this agent is for" />
+      <label>Template</label>
+      <select id="agentTemplate"></select>
+      <label>Agent Config (JSON overrides)</label>
+      <textarea id="agentConfig">{
+  "assistant_name": "Asha",
+  "domain": "Emergency support",
+  "tone": "empathetic and practical",
+  "objective": "Provide safe concise guidance",
+  "safety_policy": "Do not hallucinate, escalate emergencies",
+  "escalation_policy": "handover on uncertainty",
+  "additional_instructions": "Ask one clarifying question when details are missing.",
+  "temperature": 0.55,
+  "max_tokens": 220,
+  "similarity_threshold": 0.85
+}</textarea>
+      <div class="row">
+        <button onclick="createAgent()">Save Agent</button>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h2>Conversation History</h2>
+      <div class="toolbar">
+        <button class="secondary" onclick="loadConversations()">Refresh History</button>
+      </div>
+      <div class="grid2">
+        <div>
+          <div class="list" id="conversationList"></div>
+        </div>
+        <div>
+          <div id="conversationDetail" class="muted">Select a conversation to inspect transcript and recordings.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(msg, isError = false) {
+      const el = $("status");
+      el.textContent = msg;
+      el.style.background = isError ? "#b33a3a" : "#2f5d92";
+    }
+
+    async function api(url, options = {}) {
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const text = await res.text();
+      let body = {};
+      try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+      if (!res.ok) {
+        throw new Error(body.error || body.message || `Request failed: ${res.status}`);
+      }
+      return body;
+    }
+
+    function parseJson(textareaId) {
+      const raw = $(textareaId).value.trim();
+      if (!raw) return {};
+      return JSON.parse(raw);
+    }
+
+    async function loadActiveAgent() {
+      const data = await api("/admin/active-agent");
+      if (!data.agent) {
+        $("activeAgent").innerHTML = `<p class="muted">No active agent selected.</p>`;
+        return;
+      }
+      const a = data.agent;
+      $("activeAgent").innerHTML = `
+        <div class="item">
+          <div class="title">Active Agent: ${a.name}<span class="badge">ACTIVE</span></div>
+          <small>Template: ${a.template_name || "None"}</small>
+          <small>ID: ${a.id}</small>
+          <small>Updated: ${a.updated_at}</small>
+        </div>
+      `;
+    }
+
+    async function loadTemplates() {
+      const data = await api("/admin/templates");
+      const list = $("templateList");
+      const select = $("agentTemplate");
+      list.innerHTML = "";
+      select.innerHTML = "";
+
+      for (const t of data.templates || []) {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="title">${t.name} ${t.is_builtin ? '<span class="badge">BUILT-IN</span>' : ''}</div>
+          <div class="muted">${t.description || ""}</div>
+          <small>ID: ${t.id} | Updated: ${t.updated_at}</small>
+          <details>
+            <summary>View prompt + defaults</summary>
+            <pre>${escapeHtml(JSON.stringify(t.defaults, null, 2))}</pre>
+            <pre>${escapeHtml(t.system_prompt)}</pre>
+          </details>
+        `;
+        list.appendChild(div);
+
+        const opt = document.createElement("option");
+        opt.value = String(t.id);
+        opt.textContent = `${t.id} - ${t.name}`;
+        select.appendChild(opt);
+      }
+    }
+
+    async function createTemplate() {
+      try {
+        const payload = {
+          name: $("tplName").value.trim(),
+          description: $("tplDesc").value.trim(),
+          defaults: parseJson("tplDefaults"),
+          system_prompt: $("tplPrompt").value,
+        };
+        await api("/admin/templates", { method: "POST", body: JSON.stringify(payload) });
+        setStatus("Template created.");
+        $("tplName").value = "";
+        $("tplDesc").value = "";
+        await loadTemplates();
+      } catch (err) {
+        setStatus(`Template create failed: ${err.message}`, true);
+      }
+    }
+
+    async function loadAgents() {
+      const data = await api("/admin/agents");
+      const list = $("agentList");
+      list.innerHTML = "";
+
+      for (const a of data.agents || []) {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="title">${a.name} ${a.is_active ? '<span class="badge">ACTIVE</span>' : ''}</div>
+          <div class="muted">${a.description || ""}</div>
+          <small>ID: ${a.id} | Template: ${a.template_name || "None"}</small>
+          <small>Updated: ${a.updated_at}</small>
+          <details>
+            <summary>Config</summary>
+            <pre>${escapeHtml(JSON.stringify(a.config || {}, null, 2))}</pre>
+          </details>
+        `;
+        const row = document.createElement("div");
+        row.className = "row";
+        const btn = document.createElement("button");
+        btn.className = "success";
+        btn.textContent = "Activate";
+        btn.onclick = () => activateAgent(a.id);
+        row.appendChild(btn);
+        div.appendChild(row);
+        list.appendChild(div);
+      }
+    }
+
+    async function createAgent() {
+      try {
+        const payload = {
+          name: $("agentName").value.trim(),
+          description: $("agentDesc").value.trim(),
+          template_id: Number($("agentTemplate").value),
+          config: parseJson("agentConfig"),
+        };
+        await api("/admin/agents", { method: "POST", body: JSON.stringify(payload) });
+        setStatus("Agent created.");
+        $("agentName").value = "";
+        $("agentDesc").value = "";
+        await loadAgents();
+      } catch (err) {
+        setStatus(`Agent create failed: ${err.message}`, true);
+      }
+    }
+
+    async function activateAgent(agentId) {
+      try {
+        await api(`/admin/agents/${agentId}/activate`, { method: "POST" });
+        setStatus(`Activated agent ${agentId}.`);
+        await Promise.all([loadAgents(), loadActiveAgent()]);
+      } catch (err) {
+        setStatus(`Agent activation failed: ${err.message}`, true);
+      }
+    }
+
+    async function loadConversations() {
+      try {
+        const data = await api("/admin/conversations?limit=80");
+        const list = $("conversationList");
+        list.innerHTML = "";
+        for (const c of data.conversations || []) {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.style.cursor = "pointer";
+          div.onclick = () => loadConversationDetail(c.id);
+          div.innerHTML = `
+            <div class="title">Conversation #${c.id}</div>
+            <small>Session: ${c.session_id} | Channel: ${c.channel}</small>
+            <small>Agent: ${c.agent_name || "n/a"} | Turns: ${c.turn_count}</small>
+            <small>Lang: ${c.language} | Updated: ${c.updated_at}</small>
+            <small>${escapeHtml(c.last_text || "")}</small>
+          `;
+          list.appendChild(div);
+        }
+      } catch (err) {
+        setStatus(`History load failed: ${err.message}`, true);
+      }
+    }
+
+    async function loadConversationDetail(conversationId) {
+      try {
+        const data = await api(`/admin/conversations/${conversationId}`);
+        const c = data.conversation;
+        const host = $("conversationDetail");
+        const turnsHtml = (c.turns || []).map((t) => {
+          const audioHtml = t.audio_url
+            ? `<audio controls preload="none" src="${t.audio_url}"></audio>`
+            : "";
+          return `
+            <div class="turn ${t.role === 'assistant' ? 'assistant' : 'user'}">
+              <div><strong>${t.role.toUpperCase()}</strong> <span class="muted">${t.created_at}</span></div>
+              <div>${escapeHtml(t.text || "")}</div>
+              ${audioHtml}
+            </div>
+          `;
+        }).join("");
+
+        host.innerHTML = `
+          <h3>Conversation #${c.id}</h3>
+          <div class="muted">Session: ${c.session_id} | Channel: ${c.channel}</div>
+          <div class="muted">Agent: ${c.agent_name || "n/a"} | Language: ${c.language}</div>
+          <div class="muted">Created: ${c.created_at} | Updated: ${c.updated_at}</div>
+          <hr />
+          ${turnsHtml || '<div class="muted">No turns found.</div>'}
+        `;
+      } catch (err) {
+        setStatus(`Conversation detail failed: ${err.message}`, true);
+      }
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      };
+      return String(text).replace(/[&<>"']/g, (m) => map[m]);
+    }
+
+    async function boot() {
+      try {
+        await Promise.all([loadTemplates(), loadAgents(), loadConversations(), loadActiveAgent()]);
+        setStatus("Loaded admin data.");
+      } catch (err) {
+        setStatus(`Admin boot failed: ${err.message}`, true);
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

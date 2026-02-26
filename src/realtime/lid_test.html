@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MMS-LID Tester</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #status {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🇮🇳 MMS-LID Tester</h1>
+    <p>Record audio to test language detection in isolation.</p>
+
+    <button id="btnRecord">🔴 Record</button>
+    <button id="btnStop" disabled>⏹ Stop</button>
+
+    <div style="margin: 20px 0;">
+        <audio id="audioPreview" controls></audio>
+    </div>
+
+    <button id="btnDetect" disabled>🔍 Detect Language</button>
+
+    <div id="status">Ready</div>
+    <div id="result"></div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+
+        const btnRecord = document.getElementById('btnRecord');
+        const btnStop = document.getElementById('btnStop');
+        const btnDetect = document.getElementById('btnDetect');
+        const audioPreview = document.getElementById('audioPreview');
+        const status = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+
+        btnRecord.onclick = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                // Browsers record as WebM or MP4 by default, NOT WAV!
+                // Using generic type allows browser to infer correctly
+                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPreview.src = audioUrl;
+                btnDetect.disabled = false;
+                status.innerText = "Recording finished. Click 'Detect Language'.";
+            };
+
+            mediaRecorder.start();
+            status.innerText = "Recording... Speak now!";
+            btnRecord.disabled = true;
+            btnStop.disabled = false;
+            btnDetect.disabled = true;
+            resultDiv.innerText = "";
+        };
+
+        btnStop.onclick = () => {
+            mediaRecorder.stop();
+            btnRecord.disabled = false;
+            btnStop.disabled = true;
+        };
+
+        btnDetect.onclick = async () => {
+            if (!audioBlob) return;
+
+            status.innerText = "Uploading & Detecting...";
+            resultDiv.innerText = "Waiting for server...";
+
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "test_audio.wav");
+
+            try {
+                const response = await fetch("/detect-lang", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+                status.innerText = "Done!";
+                resultDiv.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                status.innerText = "Error!";
+                resultDiv.innerText = "Upload Failed: " + err;
+            }
+        };
+    </script>
+</body>
+
+</html>

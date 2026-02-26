@@ -1,0 +1,122 @@
+{
+  "server": "http://localhost:8080",
+  "tests": [
+    "ready",
+    "cors",
+    "ice",
+    "metrics"
+  ],
+  "runs": [
+    {
+      "run": 1,
+      "ts": "2026-02-18T08:11:52Z",
+      "ready": {
+        "ok": true,
+        "latency_ms": 3.25
+      },
+      "cors": {
+        "ok": true,
+        "latency_ms": 2.31
+      },
+      "ice": {
+        "ok": true,
+        "latency_ms": 1.65
+      },
+      "metrics": {
+        "ok": true,
+        "latency_ms": 1.79
+      },
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "run": 2,
+      "ts": "2026-02-18T08:11:52Z",
+      "ready": {
+        "ok": true,
+        "latency_ms": 1.46
+      },
+      "cors": {
+        "ok": true,
+        "latency_ms": 1.91
+      },
+      "ice": {
+        "ok": true,
+        "latency_ms": 1.91
+      },
+      "metrics": {
+        "ok": true,
+        "latency_ms": 1.86
+      },
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "run": 3,
+      "ts": "2026-02-18T08:11:52Z",
+      "ready": {
+        "ok": true,
+        "latency_ms": 1.85
+      },
+      "cors": {
+        "ok": true,
+        "latency_ms": 1.92
+      },
+      "ice": {
+        "ok": true,
+        "latency_ms": 1.56
+      },
+      "metrics": {
+        "ok": true,
+        "latency_ms": 1.88
+      },
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "run": 4,
+      "ts": "2026-02-18T08:11:52Z",
+      "ready": {
+        "ok": true,
+        "latency_ms": 1.67
+      },
+      "cors": {
+        "ok": true,
+        "latency_ms": 1.62
+      },
+      "ice": {
+        "ok": true,
+        "latency_ms": 1.7
+      },
+      "metrics": {
+        "ok": true,
+        "latency_ms": 1.5
+      },
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "run": 5,
+      "ts": "2026-02-18T08:11:52Z",
+      "ready": {
+        "ok": true,
+        "latency_ms": 1.71
+      },
+      "cors": {
+        "ok": true,
+        "latency_ms": 1.84
+      },
+      "ice": {
+        "ok": true,
+        "latency_ms": 1.54
+      },
+      "metrics": {
+        "ok": true,
+        "latency_ms": 1.5
+      },
+      "passed": 4,
+      "total": 4
+    }
+  ],
+  "all_pass_runs": 5
+}

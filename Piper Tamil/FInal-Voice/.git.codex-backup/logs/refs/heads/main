@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 87f9f03177be3df64b560aad2d6b6241e84ee0c9 jeevithg090 <jeevithg090@users.noreply.github.com> 1770552538 +0530	commit (initial): Add one-command ROCm 7.1 Piper Tamil trainer with curl dataset download
+87f9f03177be3df64b560aad2d6b6241e84ee0c9 e9ba7533d633c84169252b39c2bf032bd98c5d71 jeevithg090 <jeevithg090@users.noreply.github.com> 1770552953 +0530	commit: Hard-code Google Drive dataset URL in trainer script
+e9ba7533d633c84169252b39c2bf032bd98c5d71 85644d7eedd298c33d689935cde5e73ca8448677 jeevithg090 <jeevithg090@users.noreply.github.com> 1770553225 +0530	commit: Fix apt install command for root and sudo execution
+85644d7eedd298c33d689935cde5e73ca8448677 9a5506c934029ecd5a5052ce086acfe8866730b6 jeevithg090 <jeevithg090@users.noreply.github.com> 1770553374 +0530	commit: Auto re-download corrupted dataset archive before extraction
+9a5506c934029ecd5a5052ce086acfe8866730b6 407e86dfb560b493296145b85734070f7ae7684b jeevithg090 <jeevithg090@users.noreply.github.com> 1770553857 +0530	commit: Fix export dependency and max_steps resume behavior
+407e86dfb560b493296145b85734070f7ae7684b cf29c89f5b635db8a6e5aa0c94bacc2fa2fde51c jeevithg090 <jeevithg090@users.noreply.github.com> 1770553952 +0530	commit: Handle apt/dpkg lock contention with wait and retry
