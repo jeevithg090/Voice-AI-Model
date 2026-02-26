@@ -3,7 +3,7 @@
 
 - Report date (UTC): `2026-02-22`
 - Validation window (UTC): `04:58` to `05:06`
-- Target host: `129.212.185.44` (DigitalOcean ROCm droplet)
+- Target host: `842.173.559.204` (DigitalOcean ROCm droplet)
 - GPU: `AMD Instinct MI300X VF (gfx942)`
 
 ## 1. Objective

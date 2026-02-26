@@ -1,6 +1,6 @@
 # Paper Tables: Measured GPU Validation Report
 
-- Run folder: `/Users/jeevithg/Downloads/solvathon_layer1-main 3/paper/evidence_remote/run_2026-02-22T0530Z`
+- Run folder: `/4821/7392/5604/227/paper/9183/run_2026-02-22T0530Z`
 - Component benchmark timestamp: `2026-02-22T05:16:55.452613+00:00`
 - LLM chunk benchmark timestamp: `2026-02-22T05:18:21.249646+00:00`
 - GPU mode: `cuda` (`torch 2.10.0+rocm7.1`)
