@@ -40,27 +40,18 @@ sequenceDiagram
 
 ## 2. Configuration Reference
 
-Configuration is managed via **Global Constants** in `src/realtime/signaling_server.py`. To tune performance, modify these values at the top of the file.
-
-### Audio Settings
-| Constant | Default | Description |
-|---|---|---|
-| `SAMPLE_RATE` | `48000` | WebRTC audio sample rate (Hz). |
-| `CHANNELS` | `1` | Audio channels (Mono). |
-| `CHUNK_DURATION` | `1.5` | Duration (seconds) for Language Detection window. |
-| `MIN_SPEECH_DURATION`| `1.0` | Minimum silence duration to trigger STT. |
+All configuration is read from environment variables in `src/config.py`
+(a local `.env` is loaded automatically). See `.env.example` for the complete,
+commented list; the most relevant ones are below.
 
 ### Emergency Detection
-| Constant | Default | Description |
+| Variable | Default | Description |
 |---|---|---|
-| `DISTRESS_WINDOW` | `10` | buffer size for distress analysis. |
-| `MIN_HITS` | `3` | Number of positive detections to trigger "High Distress" mode. |
-
-### Model Paths
-| Constant | Default | Description |
-|---|---|---|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL for the local Ollama instance. |
-| `WHISPER_MODEL` | `openai/whisper-small` | Path or name of the STT model. |
+| `ENABLE_EMERGENCY_DETECTION` | `true` | Load the Mimi + classifier distress detector if available. |
+| `EMERGENCY_CLASSIFIER_PATH` | `models/emergency_classifier.pt` | Trained classifier checkpoint. |
+| `EMERGENCY_THRESHOLD` | `0.7` | Per-window probability counted as a distress hit. |
+| `DISTRESS_WINDOW` | `5` | Seconds over which hits are counted. |
+| `DISTRESS_MIN_HITS` | `3` | Hits within the window that trigger human handover. |
 
 ### Environment Variables
 | Variable | Default | Description |
