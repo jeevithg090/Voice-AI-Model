@@ -1,222 +1,70 @@
-# import asyncio
-# import threading
-# from flask import Flask, request, jsonify
-# from aiortc import RTCPeerConnection, RTCSessionDescription
-# import numpy as np
-# import librosa
+"""Realtime voice pipeline server.
 
-# from flask_cors import CORS
-
-# import torch
-
-# from transformers import MimiModel, AutoFeatureExtractor
-# from src.models.emergency_classifier import MimiEmergencyClassifier
-# from collections import deque
-# import time
-
-# from src.models.language_detector import IndicLIDDetector
-# lid = IndicLIDDetector()
-# current_language = "unknown"
-
-# INPUT_SR = 48000
-
-# EMERGENCY_WINDOW = int(INPUT_SR * 5)   # 0.5 sec
-# LANG_WINDOW = int(INPUT_SR * 1.5) 
-# DISTRESS_WINDOW = 5        # seconds to track
-# MIN_HITS = 3               # how many positives required
-# THRESHOLD = 0.7
-
-# distress_events = deque()
-# # -----------------------
-# # Setup Async Loop in Background
-# # -----------------------
-# loop = asyncio.new_event_loop()
-# asyncio.set_event_loop(loop)
-
-# def run_loop():
-#     loop.run_forever()
-
-# threading.Thread(target=run_loop, daemon=True).start()
-
-# # -----------------------
-# # Flask App
-# # -----------------------
-# app = Flask(__name__)
-
-# CORS(app) 
-# pcs = set()
-
-# device = "mps" if torch.backends.mps.is_available() else "cpu"
-
-# print("Loading Mimi...")
-# mimi = MimiModel.from_pretrained("kyutai/mimi").to(device).eval()
-# fe = AutoFeatureExtractor.from_pretrained("kyutai/mimi")
-# TARGET_SR = fe.sampling_rate
-
-# print("Loading classifier...")
-# clf = MimiEmergencyClassifier().to(device)
-# clf.load_state_dict(torch.load("models/emergency_classifier.pt", map_location=device))
-# clf.eval()
-
-
-# # -----------------------
-# # Audio Processing
-# # -----------------------
-# async def process_audio_track(track):
-#     global current_language
-
-#     print("🎙 Audio track started")
-
-#     buffer = np.array([], dtype=np.float32)
-#     last_lang_detect_samples = 0
-
-#     while True:
-#         frame = await track.recv()
-#         pcm = frame.to_ndarray()
-
-#         if pcm.ndim > 1:
-#             pcm = pcm.mean(axis=0)
-
-#         pcm = pcm.astype(np.float32) / 32768.0
-#         buffer = np.concatenate([buffer, pcm])
-
-#         # print("Frame shape:", pcm.shape, "Buffer length:", len(buffer))
-
-#         # 🌍 Language Detection (every 1.5 sec)
-#         if len(buffer) - last_lang_detect_samples >= LANG_WINDOW:
-#             segment = buffer[last_lang_detect_samples:last_lang_detect_samples + LANG_WINDOW]
-
-#             try:
-#                 lang, conf = lid.detect_from_audio(segment, sr=INPUT_SR)
-#                 current_language = lang
-#                 print(f"🌍 Detected language: {lang} ({conf:.2f})")
-#             except Exception as e:
-#                 print("LID error:", e)
-
-#             last_lang_detect_samples = len(buffer)
-
-#         # 🚑 Emergency Detection (every 0.5 sec)
-#         if len(buffer) >= EMERGENCY_WINDOW:
-#             chunk = buffer[:EMERGENCY_WINDOW]
-#             buffer = buffer[EMERGENCY_WINDOW:]
-
-#             await run_emergency_detection(chunk)
-
-
-# async def run_emergency_detection(audio_chunk):
-#     global distress_events
-
-#     audio_16k = librosa.resample(audio_chunk, orig_sr=48000, target_sr=TARGET_SR)
-#     inputs = fe(raw_audio=audio_16k, sampling_rate=TARGET_SR, return_tensors="pt").to(device)
-
-#     with torch.no_grad():
-#         codes = mimi.encode(inputs["input_values"]).audio_codes
-#         prob = clf(codes).item()
-
-#     print(f"🚑 Emergency probability: {prob:.3f}")
-
-#     now = time.time()
-
-#     # Remove old events outside window
-#     while distress_events and now - distress_events[0] > DISTRESS_WINDOW:
-#         distress_events.popleft()
-
-#     # Add new event if above threshold
-#     if prob > THRESHOLD:
-#         distress_events.append(now)
-
-#     # Check sustained distress
-#     if len(distress_events) >= MIN_HITS:
-#         print("🚨 SUSTAINED DISTRESS DETECTED 🚨")
-#         distress_events.clear()  # prevent repeat spam
-
-
-
-# # -----------------------
-# # WebRTC Offer Handling
-# # -----------------------
-# @app.route("/offer", methods=["POST"])
-# def offer():
-#     params = request.json
-#     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-
-#     pc = RTCPeerConnection()
-#     pcs.add(pc)
-
-#     @pc.on("track")
-#     def on_track(track):
-#         if track.kind == "audio":
-#             print("🎧 Receiving audio from browser")
-#             asyncio.run_coroutine_threadsafe(process_audio_track(track), loop)
-
-#     async def handle_offer():
-#         await pc.setRemoteDescription(offer)
-#         answer = await pc.createAnswer()
-#         await pc.setLocalDescription(answer)
-#         return pc.localDescription
-
-#     future = asyncio.run_coroutine_threadsafe(handle_offer(), loop)
-#     local_desc = future.result()
-
-#     return jsonify({"sdp": local_desc.sdp, "type": local_desc.type})
-
-
-# # -----------------------
-# # Start Server
-# # -----------------------
-# if __name__ == "__main__":
-#     print("🚀 Signaling + Audio Processing Server Running")
-#     app.run("0.0.0.0", 8080)
-
-
+Flask app exposing WebRTC signaling (/offer), a Twilio-style media-stream
+WebSocket (/media-stream), single-turn upload endpoints (/voice-turn,
+/voice-turn-stream), language ID (/detect-lang), the admin API and the
+browser UIs. Audio flows: endpointing -> MMS-LID -> Whisper ASR -> Ollama LLM
+(with semantic cache + Redis context) -> streamed TTS, with an optional
+parallel Mimi-based distress detector that can force a human handover.
+"""
 
 import asyncio
+import audioop
+import base64
 import concurrent.futures
-import threading
-import time
-import os
 import io
 import json
-import base64
-import audioop
-import statistics
+import os
 import queue
-from collections import deque
-from typing import Dict, Any, Optional
+import tempfile
+import threading
+import time
+from typing import Any, Dict, Optional
 
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+import av
+import gevent
+import librosa
+import numpy as np
+import soundfile as sf
+from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
+from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from flask_cors import CORS
 from flask_sock import Sock
-import gevent
 from gevent.queue import Queue
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
-import numpy as np
-import librosa
-import soundfile as sf
-import av
 
-from src.config import settings
-from src.llm.embedding_agent import process_with_context, context_manager as llm_context
-from src.llm.stream_chunker import StreamChunker
-from src.tts.tts_manager import TTSManager
-from src.realtime.audio_track import TTSAudioTrack
-from src.realtime.twilio_track import TwilioInputTrack
-from src.llm.ollama_client import check_ollama_status
 from src.admin import AdminStore, resolve_runtime_profile
+from src.config import settings
+from src.llm.embedding_agent import context_manager as llm_context
+from src.llm.embedding_agent import process_with_context
+from src.llm.ollama_client import check_ollama_status
+from src.llm.stream_chunker import StreamChunker
+from src.realtime.audio_track import TTSAudioTrack
+from src.realtime.distress import DistressTracker
+from src.realtime.emergency import load_emergency_detector
+from src.realtime.language import (
+    INDIAN_LANGUAGES,
+    LANGUAGE_CODE_MAP,
+    LANGUAGE_NAMES,
+    augment_voice_turn_prompt,
+    is_uncertain_response,
+    normalize_language_code,
+    voice_turn_max_tokens,
+)
+from src.realtime.language import get_handover_message as _localized_handover
+from src.realtime.metrics import Metrics
+from src.realtime.security import build_ice_servers, check_basic_auth
+from src.realtime.twilio_track import TwilioInputTrack
+from src.tts.tts_manager import TTSManager
+
+STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 tts_manager = TTSManager()
-admin_store = AdminStore()
+admin_store = AdminStore(settings.ADMIN_DB_PATH, settings.CONVERSATION_MEDIA_DIR)
 
 # -----------------------
 # Metrics
 # -----------------------
-metrics_lock = threading.Lock()
-metrics: Dict[str, Any] = {
-    "calls_total": 0,
-    "active_calls": 0,
-    "utterances_total": 0,
-    "latencies": {},
-}
+metrics = Metrics(window=settings.METRICS_WINDOW)
 
 # Purpose-specific runtime profiles for upload/web clients.
 AGENT_TYPE_PROFILES: Dict[str, Dict[str, Any]] = {
@@ -276,46 +124,16 @@ _purpose_agent_lock = threading.Lock()
 _purpose_agent_cache: Dict[str, int] = {}
 
 
-def _latency_bucket(name: str):
-    with metrics_lock:
-        if name not in metrics["latencies"]:
-            metrics["latencies"][name] = deque(maxlen=settings.METRICS_WINDOW)
-        return metrics["latencies"][name]
+def record_latency(name: str, value_ms: float) -> None:
+    metrics.record_latency(name, value_ms)
 
 
-def record_latency(name: str, value_ms: float):
-    bucket = _latency_bucket(name)
-    with metrics_lock:
-        bucket.append(value_ms)
+def inc_metric(name: str, delta: int = 1) -> None:
+    metrics.inc(name, delta)
 
 
-def inc_metric(name: str, delta: int = 1):
-    with metrics_lock:
-        metrics[name] = metrics.get(name, 0) + delta
-
-
-def dec_metric(name: str, delta: int = 1):
-    with metrics_lock:
-        metrics[name] = max(0, metrics.get(name, 0) - delta)
-
-
-def get_latency_stats() -> Dict[str, Dict[str, float]]:
-    stats: Dict[str, Dict[str, float]] = {}
-    # Copy under lock, then compute stats outside lock.
-    with metrics_lock:
-        latency_snapshot = {
-            name: list(values)
-            for name, values in metrics["latencies"].items()
-            if values
-        }
-    for name, vals in latency_snapshot.items():
-        stats[name] = {
-            "count": len(vals),
-            "avg_ms": float(sum(vals) / len(vals)),
-            "p50_ms": float(statistics.median(vals)),
-            "p95_ms": float(np.percentile(vals, 95)),
-        }
-    return stats
+def dec_metric(name: str, delta: int = 1) -> None:
+    metrics.dec(name, delta)
 
 
 def _parse_optional_int(value: Any) -> Optional[int]:
@@ -333,7 +151,7 @@ def _parse_optional_int(value: Any) -> Optional[int]:
 def _to_audio_url(audio_path: Optional[str]) -> Optional[str]:
     if not audio_path:
         return None
-    normalized = str(audio_path).replace("\\\\", "/").lstrip("/")
+    normalized = str(audio_path).replace("\\", "/").lstrip("/")
     return f"/admin/recordings/{normalized}"
 
 
@@ -397,33 +215,28 @@ def _resolve_requested_agent(
 
 
 def _warm_purpose_agents() -> None:
-    for agent_type in AGENT_TYPE_PROFILES.keys():
+    for agent_type in AGENT_TYPE_PROFILES:
         _ensure_agent_for_type(agent_type)
 
-import torch
 
-from transformers import MimiModel, AutoFeatureExtractor
-from src.models.emergency_classifier import MimiEmergencyClassifier
+import torch  # noqa: E402  (heavy import kept after lightweight setup)
 
-DISTRESS_WINDOW = 5        # seconds to track
-MIN_HITS = 3               # how many positives required
-THRESHOLD = 0.7
 # -----------------------
 # Whisper Endpointing State
 # -----------------------
 SILENCE_THRESHOLD = settings.SILENCE_THRESHOLD
 SILENCE_DURATION = settings.SILENCE_DURATION
 MIN_SPEECH_DURATION = settings.MIN_SPEECH_DURATION
-
-distress_events = deque()
 # -----------------------
 # Setup Async Loop in Background
 # -----------------------
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
+
 def run_loop():
     loop.run_forever()
+
 
 threading.Thread(target=run_loop, daemon=True).start()
 
@@ -434,26 +247,43 @@ app = Flask(__name__)
 sock = Sock(app)
 
 # Enable CORS for cross-origin requests (local frontend → remote GPU backend)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+_cors_origins = list(settings.CORS_ORIGINS) or ["*"]
+CORS(app, resources={r"/*": {"origins": "*" if "*" in _cors_origins else _cors_origins}})
+app.config["MAX_CONTENT_LENGTH"] = max(1, settings.MAX_UPLOAD_MB) * 1024 * 1024
+
+
+@app.errorhandler(413)
+def _payload_too_large(_err):
+    return jsonify({"error": f"Upload exceeds {settings.MAX_UPLOAD_MB} MB limit"}), 413
+
+
+@app.before_request
+def _require_admin_auth():
+    """Protect /admin (UI, API and recordings) with HTTP Basic auth when
+    ADMIN_PASSWORD is configured."""
+    if not request.path.startswith("/admin") or request.method == "OPTIONS":
+        return None
+    auth = request.authorization
+    if check_basic_auth(
+        auth.username if auth else None,
+        auth.password if auth else None,
+        settings.ADMIN_USERNAME,
+        settings.ADMIN_PASSWORD,
+    ):
+        return None
+    return Response("Authentication required", 401, {"WWW-Authenticate": 'Basic realm="voice-ai-admin"'})
+
+
+if not settings.ADMIN_PASSWORD:
+    print("⚠️ ADMIN_PASSWORD is not set: /admin endpoints are unauthenticated.")
 
 pcs = set()
 
-# ICE Servers with TURN support for NAT traversal
-ICE_SERVERS = [
-    RTCIceServer(urls="stun:stun.l.google.com:19302"),
-    RTCIceServer(urls="stun:stun1.l.google.com:19302"),
-    # Free TURN servers for NAT traversal (frontend on local PC ↔ backend on DigitalOcean)
-    RTCIceServer(
-        urls="turn:openrelay.metered.ca:80",
-        username="openrelayproject",
-        credential="openrelayproject",
-    ),
-    RTCIceServer(
-        urls="turn:openrelay.metered.ca:443",
-        username="openrelayproject",
-        credential="openrelayproject",
-    ),
-]
+# ICE servers (STUN by default; TURN when configured via env).
+ICE_SERVER_CONFIG = build_ice_servers(
+    settings.STUN_URLS, settings.TURN_URLS, settings.TURN_USERNAME, settings.TURN_CREDENTIAL
+)
+ICE_SERVERS = [RTCIceServer(**srv) for srv in ICE_SERVER_CONFIG]
 RTC_CONFIG = RTCConfiguration(iceServers=ICE_SERVERS)
 
 if torch.cuda.is_available():
@@ -463,22 +293,36 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-print("Loading Mimi...")
-mimi = MimiModel.from_pretrained("kyutai/mimi").to(device).eval()
-fe = AutoFeatureExtractor.from_pretrained("kyutai/mimi")
-TARGET_SR = fe.sampling_rate
+print("Loading emergency detector (Mimi + classifier)...")
+emergency_detector, emergency_status = load_emergency_detector(
+    device=device,
+    mimi_model=settings.MIMI_MODEL,
+    checkpoint_path=settings.EMERGENCY_CLASSIFIER_PATH,
+    enabled=settings.ENABLE_EMERGENCY_DETECTION,
+)
+if emergency_detector is None:
+    print(f"⚠️ Emergency detection disabled: {emergency_status}")
+else:
+    print("✅ Emergency detector ready")
 
-print("Loading classifier...")
-clf = MimiEmergencyClassifier().to(device)
-clf.load_state_dict(torch.load("models/emergency_classifier.pt", map_location=device))
-clf.eval()
+INPUT_SR = 48000
+# Classifier window length, in samples of the 48 kHz input stream (0.5 s).
+EMERGENCY_WINDOW = INPUT_SR // 2
 
 
+def new_distress_tracker() -> DistressTracker:
+    return DistressTracker(
+        window_s=settings.DISTRESS_WINDOW,
+        min_hits=settings.DISTRESS_MIN_HITS,
+        threshold=settings.EMERGENCY_THRESHOLD,
+    )
 
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
+
+from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
 whisper_model = None
 whisper_processor = None
+
 
 def load_whisper():
     global whisper_model, whisper_processor
@@ -506,58 +350,32 @@ threading.Thread(target=load_whisper, daemon=True).start()
 # -----------------------
 # MMS-LID Language Detection (uses raw audio - no extra normalization)
 # -----------------------
-from transformers import Wav2Vec2ForSequenceClassification, AutoFeatureExtractor as LIDFeatureExtractor
+from transformers import AutoFeatureExtractor as LIDFeatureExtractor
+from transformers import Wav2Vec2ForSequenceClassification
 
-INPUT_SR = 48000
 LID_TARGET_SR = 16000  # MMS-LID expects 16kHz
 LANG_WINDOW = int(INPUT_SR * 1.5)  # 1.5 sec of audio for language detection
-
-current_language = "unknown"
-
-# Language code mappings
-LANGUAGE_CODE_MAP = {
-    'hin': 'hi', 'tam': 'ta', 'tel': 'te', 'kan': 'kn',
-    'ben': 'bn', 'guj': 'gu', 'mal': 'ml', 'mar': 'mr',
-    'pan': 'pa', 'ori': 'or', 'asm': 'as', 'urd': 'ur',
-    'eng': 'en',
-}
-
-LANGUAGE_NAMES = {
-    'en': 'English',
-    'hi': 'Hindi', 'ta': 'Tamil', 'te': 'Telugu', 'kn': 'Kannada',
-    'bn': 'Bengali', 'gu': 'Gujarati', 'ml': 'Malayalam', 'mr': 'Marathi',
-    'pa': 'Punjabi', 'or': 'Odia', 'as': 'Assamese', 'ur': 'Urdu',
-}
-
-INDIAN_LANGUAGES = {'hin', 'tam', 'tel', 'kan', 'ben', 'guj', 'mal', 'mar', 'pan', 'ori', 'asm', 'urd'}
 
 lid_model = None
 lid_processor = None
 lid_id2label = None
 
+
 def load_lid_model():
     global lid_model, lid_processor, lid_id2label
     print("🔄 Loading MMS-LID language detector in background...")
-    
-    lid_processor = LIDFeatureExtractor.from_pretrained(settings.LID_MODEL)
-    lid_model = Wav2Vec2ForSequenceClassification.from_pretrained(settings.LID_MODEL)
-    lid_model = lid_model.to(device)
-    lid_model.eval()
-    lid_id2label = lid_model.config.id2label
-    
+    try:
+        processor = LIDFeatureExtractor.from_pretrained(settings.LID_MODEL)
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(settings.LID_MODEL)
+        model = model.to(device).eval()
+    except Exception as e:
+        print(f"❌ MMS-LID load failed: {e}")
+        return
+    lid_processor, lid_model, lid_id2label = processor, model, model.config.id2label
     print(f"✅ MMS-LID ready! ({len(lid_id2label)} languages)")
 
+
 threading.Thread(target=load_lid_model, daemon=True).start()
-
-
-def normalize_language_code(code: str) -> str:
-    if not code:
-        return "en"
-    if code in LANGUAGE_CODE_MAP:
-        return LANGUAGE_CODE_MAP[code]
-    if code in LANGUAGE_CODE_MAP.values():
-        return code
-    return "en"
 
 
 def detect_language_from_audio(audio_chunk_48k: np.ndarray) -> Optional[str]:
@@ -590,80 +408,24 @@ def detect_language_from_audio(audio_chunk_48k: np.ndarray) -> Optional[str]:
         return None
 
 
-HANDOVER_MESSAGES = {
-    "en": "I will connect you to a human for further help.",
-    "hi": "मैं आपको आगे की मदद के लिए मानव से जोड़ रहा हूँ।",
-    "ta": "மேலும் உதவிக்காக நான் உங்களை மனித உதவியுடன் இணைக்கிறேன்.",
-    "te": "ఇంకా సహాయం కోసం నేను మిమ్మల్ని మనిషితో కలుపుతున్నాను.",
-    "kn": "ಹೆಚ್ಚಿನ ಸಹಾಯಕ್ಕಾಗಿ ನಾನು ನಿಮ್ಮನ್ನು ಮಾನವರೊಂದಿಗೆ ಸಂಪರ್ಕಿಸುತ್ತೇನೆ.",
-}
-
-
-UNCERTAINTY_PHRASES = {
-    "en": ["i'm not sure", "i do not know", "cannot help", "unable to answer"],
-    "hi": ["मुझे नहीं पता", "मैं निश्चित नहीं हूँ", "माफ़ कीजिए, पता नहीं"],
-    "ta": ["எனக்குத் தெரியவில்லை", "நான் உறுதி இல்லை", "மன்னிக்கவும், தெரியவில்லை"],
-    "te": ["నాకు తెలియదు", "నాకు ఖచ్చితంగా తెలియదు", "క్షమించండి, తెలియదు"],
-    "kn": ["ನನಗೆ ತಿಳಿದಿಲ್ಲ", "ನಾನು ಖಚಿತವಿಲ್ಲ", "ಕ್ಷಮಿಸಿ, ತಿಳಿದಿಲ್ಲ"],
-}
-
-
 def get_handover_message(language_code: str) -> str:
-    message = HANDOVER_MESSAGES.get(language_code, HANDOVER_MESSAGES["en"])
-    if settings.HANDOVER_MODE == "kiosk":
-        kiosk_messages = {
-            "en": "Please visit the help desk for further assistance.",
-            "hi": "कृपया आगे की मदद के लिए सहायता डेस्क पर जाएँ।",
-            "ta": "மேலும் உதவிக்காக உதவி மேசையை அணுகவும்.",
-            "te": "ఇంకా సహాయం కోసం సహాయ డెస్క్ వద్దకు వెళ్లండి.",
-            "kn": "ಹೆಚ್ಚಿನ ಸಹಾಯಕ್ಕಾಗಿ ಸಹಾಯ ಮೇಜಿಗೆ ಭೇಟಿ ನೀಡಿ.",
-        }
-        message = kiosk_messages.get(language_code, kiosk_messages["en"])
-    return message
-
-
-def is_uncertain_response(text: str, language_code: str) -> bool:
-    if not text:
-        return True
-    phrases = UNCERTAINTY_PHRASES.get(language_code, [])
-    lower = text.lower()
-    return any(p in lower for p in phrases)
+    return _localized_handover(language_code, settings.HANDOVER_MODE)
 
 
 def _voice_turn_max_tokens(profile_max_tokens: int) -> int:
-    configured = max(1, int(settings.VOICE_TURN_MAX_TOKENS))
-    if profile_max_tokens and profile_max_tokens > 0:
-        return min(profile_max_tokens, configured)
-    return configured
+    return voice_turn_max_tokens(profile_max_tokens, settings.VOICE_TURN_MAX_TOKENS)
 
 
-def _augment_voice_turn_prompt(system_prompt: str, language_code: str) -> str:
-    lang = LANGUAGE_NAMES.get(language_code, LANGUAGE_NAMES["en"])
-    script_hint = {
-        "en": "Use English script only.",
-        "hi": "Use Devanagari script only.",
-        "ta": "Use Tamil script only.",
-        "te": "Use Telugu script only.",
-        "kn": "Use Kannada script only.",
-    }.get(language_code, f"Use only {lang} language script.")
-
-    return (
-        f"{(system_prompt or '').rstrip()}\n\n"
-        "[VOICE TURN RULES]\n"
-        f"- Respond only in {lang} ({language_code}). {script_hint}\n"
-        "- Keep it concise for speech output (1-2 short sentences).\n"
-        "- Do not switch languages unless the user explicitly asks.\n"
-    )
+_augment_voice_turn_prompt = augment_voice_turn_prompt
 
 
 def _sse_event(event: str, payload: Dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
+
 # -----------------------
 # Audio Processing
 # -----------------------
-import io # Ensure io is imported
-
 async def process_audio_track(
     track,
     target_language="eng",
@@ -673,6 +435,7 @@ async def process_audio_track(
     agent_id: Optional[int] = None,
 ):
     language_code = normalize_language_code(target_language)
+    distress = new_distress_tracker()
     if auto_detect or target_language in ["auto", "", None]:
         language_code = "en"
     print(f"🎙 Audio track started (Language: {language_code}, auto_detect={auto_detect})")
@@ -698,7 +461,6 @@ async def process_audio_track(
         conversation_id = conversation["id"]
     except Exception as e:
         print(f"⚠️ Failed to initialize conversation record: {e}")
-
 
     # Create local buffer for this track session (don't use global asr_buffer safely multiple calls)
     # Actually, using global is bad for multiple calls. Let's make it local.
@@ -730,7 +492,11 @@ async def process_audio_track(
     )
 
     while True:
-        frame = await track.recv()
+        try:
+            frame = await track.recv()
+        except Exception as e:  # MediaStreamError when the remote track ends
+            print(f"🔚 Audio track ended ({type(e).__name__})")
+            break
         pcm = frame.to_ndarray()
 
         if pcm.ndim > 1:
@@ -741,18 +507,18 @@ async def process_audio_track(
             pcm = np.clip(pcm * input_gain, -1.0, 1.0)
 
         # ---------------- EMERGENCY DETECTION ----------------
-        buffer = np.concatenate([buffer, pcm])
-
-        if len(buffer) >= TARGET_SR:
-            chunk = buffer[:TARGET_SR]
-            buffer = buffer[TARGET_SR:]
-            await run_emergency_detection(chunk)
+        if emergency_detector is not None:
+            buffer = np.concatenate([buffer, pcm])
+            if len(buffer) >= EMERGENCY_WINDOW:
+                chunk = buffer[:EMERGENCY_WINDOW]
+                buffer = buffer[EMERGENCY_WINDOW:]
+                await run_emergency_detection(chunk, distress)
 
         # ---------------- LID AUTO-DETECT ----------------
         if auto_detect:
             lid_buffer = np.concatenate([lid_buffer, pcm])
             if len(lid_buffer) - last_lid_samples >= LANG_WINDOW:
-                segment = lid_buffer[last_lid_samples:last_lid_samples + LANG_WINDOW]
+                segment = lid_buffer[last_lid_samples : last_lid_samples + LANG_WINDOW]
                 detected = detect_language_from_audio(segment)
                 if detected and detected != language_code:
                     language_code = detected
@@ -795,51 +561,25 @@ async def process_audio_track(
                         print(f"🛑 Speech ended → Sending to Whisper ({language_code})")
                         chunk = local_asr_buffer.copy()
                         resolved_agent_id = getattr(track, "agent_id", None) or agent_id
-                        asyncio.create_task(run_whisper_asr(
-                            chunk, 
-                            language_code=language_code, 
-                            session_id=session_id,
-                            output_track=output_track,
-                            twilio_output_sender=twilio_output_sender,
-                            conversation_id=conversation_id,
-                            agent_id=resolved_agent_id,
-                            user_audio_chunk=chunk,
-                        ))
+                        asyncio.create_task(
+                            run_whisper_asr(
+                                chunk,
+                                language_code=language_code,
+                                session_id=session_id,
+                                output_track=output_track,
+                                twilio_output_sender=twilio_output_sender,
+                                conversation_id=conversation_id,
+                                agent_id=resolved_agent_id,
+                                user_audio_chunk=chunk,
+                                distress=distress,
+                            )
+                        )
 
                     # Reset state
                     local_asr_buffer = np.array([], dtype=np.float32)
                     local_speech_start = None
                     local_last_voice = None
 
-
-# async def run_whisper_asr(audio_chunk_48k):
-#     global whisper_model
-
-#     if whisper_model is None:
-#         return
-
-#     print("🧠 Running Whisper ASR...")
-
-#     audio_16k = librosa.resample(audio_chunk_48k, orig_sr=48000, target_sr=16000)
-#     audio_16k = audio_16k.astype(np.float32)
-
-#     # Boost mic level a bit
-#     audio_16k *= 2.5
-#     audio_16k = np.clip(audio_16k, -1.0, 1.0)
-
-#     segments, info = whisper_model.transcribe(
-#         audio_16k,
-#         beam_size=1,
-#         vad_filter=True,
-#         vad_parameters=dict(min_silence_duration_ms=300)
-#     )
-
-#     text = " ".join(seg.text for seg in segments).strip()
-
-#     if text:
-#         print(f"📝 ASR: {text}")
-#     else:
-#         print("🤐 (No speech detected)")
 
 async def run_whisper_asr(
     audio_chunk_48k,
@@ -850,8 +590,8 @@ async def run_whisper_asr(
     conversation_id: Optional[int] = None,
     agent_id: Optional[int] = None,
     user_audio_chunk: Optional[np.ndarray] = None,
+    distress: Optional[DistressTracker] = None,
 ):
-    global whisper_model, whisper_processor
 
     if whisper_model is None or whisper_processor is None:
         print("⏳ Whisper still loading...")
@@ -874,10 +614,7 @@ async def run_whisper_asr(
         forced_ids = None
     with torch.no_grad():
         generate_kwargs = {"forced_decoder_ids": forced_ids} if forced_ids else {}
-        generated_ids = whisper_model.generate(
-            inputs.input_features.to(device),
-            **generate_kwargs
-        )
+        generated_ids = whisper_model.generate(inputs.input_features.to(device), **generate_kwargs)
     text = whisper_processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
     record_latency("stt_ms", (time.perf_counter() - stt_start) * 1000)
 
@@ -888,13 +625,13 @@ async def run_whisper_asr(
         # --- LLM INTEGRATION (STREAMING) ---
         print(f"🤖 Sending to LLM (Session: {session_id})...")
 
-        sustained_distress = len(distress_events) >= MIN_HITS
+        sustained_distress = distress.consume() if distress is not None else False
         metadata = {
             "detected_language": whisper_lang,
             "language_confidence": "0.99",
             "emergency_probability": "High" if sustained_distress else "Low",
             "sustained_distress": str(sustained_distress),
-            "processing_latency_ms": "0"
+            "processing_latency_ms": "0",
         }
         runtime_profile = resolve_runtime_profile(
             admin_store,
@@ -927,16 +664,23 @@ async def run_whisper_asr(
             if not final_text or not conversation_id:
                 return
             try:
-                archive_audio = asyncio.run_coroutine_threadsafe(
-                    tts_manager.speak(final_text, whisper_lang),
-                    loop,
-                ).result(timeout=120) or b""
-                assistant_audio_path = admin_store.save_audio_bytes(
-                    conversation_id=conversation_id,
-                    role="assistant",
-                    audio_bytes=archive_audio,
-                    ext="wav",
-                ) if archive_audio else None
+                archive_audio = (
+                    asyncio.run_coroutine_threadsafe(
+                        tts_manager.speak(final_text, whisper_lang),
+                        loop,
+                    ).result(timeout=120)
+                    or b""
+                )
+                assistant_audio_path = (
+                    admin_store.save_audio_bytes(
+                        conversation_id=conversation_id,
+                        role="assistant",
+                        audio_bytes=archive_audio,
+                        ext="wav",
+                    )
+                    if archive_audio
+                    else None
+                )
                 admin_store.add_turn(
                     conversation_id=conversation_id,
                     role="assistant",
@@ -949,13 +693,28 @@ async def run_whisper_asr(
             except Exception as e:
                 print(f"⚠️ Failed to persist assistant turn: {e}")
 
-        # Emergency handover shortcut
+        async def run_tts_and_send(text_chunk, lang):
+            tts_start = time.perf_counter()
+            audio_bytes = await tts_manager.speak(text_chunk, lang)
+            record_latency("tts_ms", (time.perf_counter() - tts_start) * 1000)
+            if not audio_bytes:
+                print("⚠️ TTS Synthesis Failed")
+                return
+            print(f"🔊 Generated {len(audio_bytes)} bytes of audio for: '{text_chunk[:10]}...'")
+            if output_track:
+                try:
+                    running_loop = asyncio.get_running_loop()
+                    await running_loop.run_in_executor(None, output_track.add_audio_bytes, audio_bytes)
+                except Exception as e:
+                    print(f"❌ Failed to add audio to track: {e}")
+            if twilio_output_sender:
+                await twilio_output_sender(audio_bytes)
+
+        # Emergency handover shortcut: speak the handover message to the caller.
         if sustained_distress:
             handover_text = get_handover_message(whisper_lang)
-            asyncio.run_coroutine_threadsafe(
-                tts_manager.speak(handover_text, whisper_lang), loop
-            )
-            persist_assistant_turn(handover_text)
+            asyncio.run_coroutine_threadsafe(run_tts_and_send(handover_text, whisper_lang), loop)
+            threading.Thread(target=persist_assistant_turn, args=(handover_text,), daemon=True).start()
             return
 
         def stream_worker():
@@ -981,37 +740,14 @@ async def run_whisper_asr(
                 )
                 chunk_count = 0
 
-                async def run_tts_and_send(text_chunk, lang):
-                    tts_start = time.perf_counter()
-                    audio_bytes = await tts_manager.speak(text_chunk, lang)
-                    record_latency("tts_ms", (time.perf_counter() - tts_start) * 1000)
-                    if audio_bytes:
-                        print(f"🔊 Generated {len(audio_bytes)} bytes of audio for: '{text_chunk[:10]}...'")
-
-                        if output_track:
-                            try:
-                                loop = asyncio.get_running_loop()
-                                await loop.run_in_executor(None, output_track.add_audio_bytes, audio_bytes)
-                            except Exception as e:
-                                print(f"❌ Failed to add audio to track: {e}")
-
-                        if twilio_output_sender:
-                            await twilio_output_sender(audio_bytes)
-                    else:
-                        print("⚠️ TTS Synthesis Failed")
-
                 if not llm_result.get("stream"):
                     response_text = llm_result["response"]
                     full_response = response_text
                     print(f"✅ [Cache] Response: {response_text}")
-                    asyncio.run_coroutine_threadsafe(
-                        run_tts_and_send(response_text, whisper_lang), loop
-                    )
+                    asyncio.run_coroutine_threadsafe(run_tts_and_send(response_text, whisper_lang), loop)
                     if is_uncertain_response(response_text, whisper_lang):
                         handover_text = get_handover_message(whisper_lang)
-                        asyncio.run_coroutine_threadsafe(
-                            run_tts_and_send(handover_text, whisper_lang), loop
-                        )
+                        asyncio.run_coroutine_threadsafe(run_tts_and_send(handover_text, whisper_lang), loop)
                     persist_assistant_turn(full_response)
                     return
 
@@ -1029,17 +765,13 @@ async def run_whisper_asr(
                             chunker.min_words = max(chunker.min_words, settings.STREAM_CHUNK_MIN_WORDS * 2)
                         chunk_count += 1
                         print(f"🗣️  [Chunk #{chunk_count}] {chunk}")
-                        asyncio.run_coroutine_threadsafe(
-                            run_tts_and_send(chunk, whisper_lang), loop
-                        )
+                        asyncio.run_coroutine_threadsafe(run_tts_and_send(chunk, whisper_lang), loop)
 
                 last_chunk = chunker.flush()
                 if last_chunk:
                     chunk_count += 1
                     print(f"🗣️  [Chunk #{chunk_count}] {last_chunk}")
-                    asyncio.run_coroutine_threadsafe(
-                        run_tts_and_send(last_chunk, whisper_lang), loop
-                    )
+                    asyncio.run_coroutine_threadsafe(run_tts_and_send(last_chunk, whisper_lang), loop)
 
                 record_latency("llm_total_ms", (time.perf_counter() - llm_start) * 1000)
                 print(f"✅ Stream Complete ({chunk_count} chunks)")
@@ -1047,9 +779,7 @@ async def run_whisper_asr(
 
                 if is_uncertain_response(full_response, whisper_lang):
                     handover_text = get_handover_message(whisper_lang)
-                    asyncio.run_coroutine_threadsafe(
-                        tts_manager.speak(handover_text, whisper_lang), loop
-                    )
+                    asyncio.run_coroutine_threadsafe(run_tts_and_send(handover_text, whisper_lang), loop)
 
             except Exception as e:
                 print(f"❌ LLM Stream Error: {e}")
@@ -1059,32 +789,47 @@ async def run_whisper_asr(
     else:
         print("🤐 No speech detected")
 
-async def run_emergency_detection(audio_chunk):
-    global distress_events
 
-    audio_16k = librosa.resample(audio_chunk, orig_sr=48000, target_sr=TARGET_SR)
-    inputs = fe(raw_audio=audio_16k, sampling_rate=TARGET_SR, return_tensors="pt").to(device)
+async def run_emergency_detection(audio_chunk: np.ndarray, distress: DistressTracker) -> None:
+    """Score one 48 kHz window with the distress classifier and update the tracker."""
+    if emergency_detector is None:
+        return
+    try:
+        audio = librosa.resample(audio_chunk, orig_sr=INPUT_SR, target_sr=emergency_detector.sample_rate)
+        prob = emergency_detector.predict(audio)
+    except Exception as e:
+        print(f"⚠️ Emergency detection failed: {e}")
+        return
+    if distress.observe(prob):
+        print(f"🚨 SUSTAINED DISTRESS DETECTED (p={prob:.3f}) 🚨")
 
-    with torch.no_grad():
-        codes = mimi.encode(inputs["input_values"]).audio_codes
-        prob = clf(codes).item()
 
-    print(f"🚑 Emergency probability: {prob:.3f}")
+def assess_uploaded_distress(audio_48k: np.ndarray) -> bool:
+    """Run the distress classifier over an uploaded utterance window by window.
 
-    now = time.time()
-
-    # Remove old events outside window
-    while distress_events and now - distress_events[0] > DISTRESS_WINDOW:
-        distress_events.popleft()
-
-    # Add new event if above threshold
-    if prob > THRESHOLD:
-        distress_events.append(now)
-
-    # Check sustained distress
-    if len(distress_events) >= MIN_HITS:
-        print("🚨 SUSTAINED DISTRESS DETECTED 🚨")
-        distress_events.clear()  # prevent repeat spam
+    Uses a simulated clock (0.5 s per window) so the same sustained-distress
+    rule as live calls applies to single-turn uploads.
+    """
+    if emergency_detector is None or audio_48k.size < EMERGENCY_WINDOW:
+        return False
+    sim_time = [0.0]
+    tracker = DistressTracker(
+        window_s=settings.DISTRESS_WINDOW,
+        min_hits=settings.DISTRESS_MIN_HITS,
+        threshold=settings.EMERGENCY_THRESHOLD,
+        clock=lambda: sim_time[0],
+    )
+    triggered = False
+    for start in range(0, audio_48k.size - EMERGENCY_WINDOW + 1, EMERGENCY_WINDOW):
+        window = audio_48k[start : start + EMERGENCY_WINDOW]
+        try:
+            audio = librosa.resample(window, orig_sr=INPUT_SR, target_sr=emergency_detector.sample_rate)
+            triggered = tracker.observe(emergency_detector.predict(audio)) or triggered
+        except Exception as e:
+            print(f"⚠️ Emergency detection failed: {e}")
+            return False
+        sim_time[0] += EMERGENCY_WINDOW / INPUT_SR
+    return triggered
 
 
 def _decode_audio_bytes(audio_bytes: bytes, target_sr: int) -> np.ndarray:
@@ -1120,7 +865,7 @@ def wav_bytes_to_mulaw_chunks(audio_bytes: bytes, target_sr: int = 8000, frame_m
     mulaw = audioop.lin2ulaw(pcm16, 2)
     chunk_size = int(target_sr * (frame_ms / 1000.0))  # samples per frame
     for i in range(0, len(mulaw), chunk_size):
-        chunk = mulaw[i:i + chunk_size]
+        chunk = mulaw[i : i + chunk_size]
         if len(chunk) < chunk_size:
             chunk += b"\xff" * (chunk_size - len(chunk))
         yield base64.b64encode(chunk).decode("utf-8")
@@ -1150,10 +895,7 @@ def run_single_turn_pipeline(
         forced_ids = None
     with torch.no_grad():
         generate_kwargs = {"forced_decoder_ids": forced_ids} if forced_ids else {}
-        generated_ids = whisper_model.generate(
-            inputs.input_features.to(device),
-            **generate_kwargs
-        )
+        generated_ids = whisper_model.generate(inputs.input_features.to(device), **generate_kwargs)
     transcript = whisper_processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
     stt_ms = (time.perf_counter() - stt_start) * 1000
     record_latency("stt_ms", stt_ms)
@@ -1179,7 +921,7 @@ def run_single_turn_pipeline(
     inc_metric("utterances_total", 1)
     print(f"📝 [Upload] ASR Final: {transcript}")
 
-    sustained_distress = len(distress_events) >= MIN_HITS
+    sustained_distress = assess_uploaded_distress(audio_chunk_48k)
     metadata = {
         "detected_language": whisper_lang,
         "language_confidence": "0.99",
@@ -1398,7 +1140,7 @@ def voice_turn():
         return jsonify({"error": "TTS timed out"}), 504
     except Exception as e:
         print(f"❌ /voice-turn failed: {e}")
-        return jsonify({"error": f"Voice turn failed: {e}"}), 500
+        return jsonify({"error": "Voice turn failed"}), 500
 
     if conversation_id:
         try:
@@ -1454,20 +1196,22 @@ def voice_turn():
         if len(audio_b64) > 700_000:
             print(f"⚠️ [Upload] Large base64 payload to browser: {len(audio_b64)} chars")
 
-    return jsonify({
-        "ok": True,
-        "session_id": session_id,
-        "conversation_id": conversation_id,
-        "agent_id": result.get("agent_id"),
-        "agent_name": result.get("agent_name"),
-        "agent_type": requested_agent_type or None,
-        "language": result["language"],
-        "transcript": result["transcript"],
-        "response": result["response"],
-        "audio_b64": audio_b64,
-        "audio_mime": "audio/wav",
-        "timings_ms": result.get("timings_ms", {}),
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "session_id": session_id,
+            "conversation_id": conversation_id,
+            "agent_id": result.get("agent_id"),
+            "agent_name": result.get("agent_name"),
+            "agent_type": requested_agent_type or None,
+            "language": result["language"],
+            "transcript": result["transcript"],
+            "response": result["response"],
+            "audio_b64": audio_b64,
+            "audio_mime": "audio/wav",
+            "timings_ms": result.get("timings_ms", {}),
+        }
+    )
 
 
 @app.route("/voice-turn-stream", methods=["POST"])
@@ -1575,10 +1319,10 @@ def voice_turn_stream():
         runtime_profile = None
         pcm_parts = []
 
-        text_queue: "queue.Queue[Optional[tuple[int, str]]]" = queue.Queue(
+        text_queue: queue.Queue[Optional[tuple[int, str]]] = queue.Queue(
             maxsize=max(1, int(settings.STREAM_CHUNK_MAX_QUEUE))
         )
-        audio_event_queue: "queue.Queue[tuple[str, Dict[str, Any]]]" = queue.Queue()
+        audio_event_queue: queue.Queue[tuple[str, Dict[str, Any]]] = queue.Queue()
         worker_done = threading.Event()
         worker_state: Dict[str, Any] = {
             "tts_total_ms": 0.0,
@@ -1606,10 +1350,13 @@ def voice_turn_stream():
                     idx, text_chunk = item
                     synth_start = time.perf_counter()
                     try:
-                        audio_part = asyncio.run_coroutine_threadsafe(
-                            tts_manager.speak(text_chunk, whisper_lang),
-                            loop,
-                        ).result(timeout=120) or b""
+                        audio_part = (
+                            asyncio.run_coroutine_threadsafe(
+                                tts_manager.speak(text_chunk, whisper_lang),
+                                loop,
+                            ).result(timeout=120)
+                            or b""
+                        )
                     except Exception as e:
                         audio_event_queue.put(("error", {"message": f"TTS chunk {idx} failed: {e}"}))
                         continue
@@ -1688,7 +1435,7 @@ def voice_turn_stream():
                 return
 
             inc_metric("utterances_total", 1)
-            sustained_distress = len(distress_events) >= MIN_HITS
+            sustained_distress = assess_uploaded_distress(audio_48k)
             metadata = {
                 "detected_language": whisper_lang,
                 "language_confidence": "0.99",
@@ -1762,7 +1509,11 @@ def voice_turn_stream():
                         chunk_count += 1
                         queue_max_depth = max(queue_max_depth, text_queue.qsize())
                 else:
-                    response_text = (llm_result.get("response") or "").strip() if isinstance(llm_result, dict) else str(llm_result).strip()
+                    response_text = (
+                        (llm_result.get("response") or "").strip()
+                        if isinstance(llm_result, dict)
+                        else str(llm_result).strip()
+                    )
                     if response_text:
                         yield _sse_event("llm_chunk", {"index": chunk_count, "text": response_text})
                         text_queue.put((chunk_count, response_text))
@@ -1885,7 +1636,7 @@ def voice_turn_stream():
             )
         except Exception as e:
             print(f"❌ /voice-turn-stream failed: {e}")
-            yield _sse_event("error", {"message": f"Voice turn stream failed: {e}"})
+            yield _sse_event("error", {"message": "Voice turn stream failed"})
             turn_total_ms = (time.perf_counter() - turn_start) * 1000
             record_latency("turn_total_ms", turn_total_ms)
             yield _sse_event(
@@ -1925,7 +1676,6 @@ def voice_turn_stream():
             "X-Accel-Buffering": "no",
         },
     )
-
 
 
 # -----------------------
@@ -1972,7 +1722,7 @@ def media_stream(ws):
             auto_detect=settings.ENABLE_LID_AUTODETECT,
             agent_id=input_track.agent_id,
         ),
-        loop
+        loop,
     )
 
     try:
@@ -2012,7 +1762,7 @@ def offer():
     # Readiness guard: reject calls if models aren't loaded yet
     if whisper_model is None or whisper_processor is None:
         return jsonify({"error": "Server models not ready yet. Please wait."}), 503
-    
+
     params = request.json or {}
     sdp = params.get("sdp")
     sdp_type = params.get("type")
@@ -2031,6 +1781,7 @@ def offer():
 
         pc = RTCPeerConnection(configuration=RTC_CONFIG)
         pcs.add(pc)
+        call_state = {"closed": False}
 
         # Create Speaker Track
         output_track = TTSAudioTrack(loop=loop)
@@ -2048,12 +1799,15 @@ def offer():
                         auto_detect=auto_detect,
                         agent_id=requested_agent_id,
                     ),
-                    loop
+                    loop,
                 )
 
         @pc.on("iceconnectionstatechange")
         async def on_ice_state_change():
             if pc.iceConnectionState in ["failed", "closed", "disconnected"]:
+                if call_state["closed"]:
+                    return
+                call_state["closed"] = True
                 try:
                     await pc.close()
                 finally:
@@ -2081,7 +1835,8 @@ def offer():
         return jsonify({"error": "Offer timed out while gathering ICE"}), 504
     except Exception as e:
         dec_metric("active_calls", 1)
-        return jsonify({"error": f"Offer failed: {e}"}), 500
+        print(f"❌ /offer failed: {e}")
+        return jsonify({"error": "Offer failed"}), 500
 
     return jsonify({"sdp": local_desc.sdp, "type": local_desc.type})
 
@@ -2102,7 +1857,7 @@ def _conversation_with_urls(conversation: Dict[str, Any]) -> Dict[str, Any]:
 
 @app.route("/admin")
 def admin_panel():
-    return open("src/realtime/admin_panel.html").read()
+    return send_from_directory(STATIC_DIR, "admin_panel.html")
 
 
 @app.route("/admin/templates", methods=["GET"])
@@ -2202,35 +1957,24 @@ def admin_get_recording(recording_path: str):
 
 
 # -----------------------
-# Start Server
-# -----------------------
-# -----------------------
-# Start Server
+# Browser UIs
 # -----------------------
 @app.route("/")
-def client_root():
-    return open("src/realtime/client.html").read()
-
 @app.route("/client")
 def client_page():
-    return open("src/realtime/client.html").read()
+    return send_from_directory(STATIC_DIR, "client.html")
+
 
 @app.route("/call")
 def call_interface():
-    """Serve the new production call interface."""
-    try:
-        return open("src/realtime/call_interface.html").read()
-    except FileNotFoundError:
-        return "Call interface not yet created. Use /client for now.", 404
+    """Production call interface."""
+    return send_from_directory(STATIC_DIR, "call_interface.html")
 
 
 @app.route("/push-to-talk")
 def push_to_talk_interface():
-    """Serve press-and-hold upload interface for ngrok demos."""
-    try:
-        return open("src/realtime/push_to_talk.html").read()
-    except FileNotFoundError:
-        return "Push-to-talk interface not found.", 404
+    """Press-and-hold upload interface (works without WebRTC)."""
+    return send_from_directory(STATIC_DIR, "push_to_talk.html")
 
 
 @app.route("/agent-types", methods=["GET"])
@@ -2248,36 +1992,38 @@ def list_agent_types():
         )
     return jsonify({"agent_types": payload})
 
+
 @app.route("/favicon.ico")
 def favicon():
     return ("", 204)
 
+
 @app.route("/lid-test")
 def lid_test_page():
-    return open("src/realtime/lid_test.html").read()
+    return send_from_directory(STATIC_DIR, "lid_test.html")
+
 
 @app.route("/detect-lang", methods=["POST"])
 def detect_lang_endpoint():
-    global lid_model, lid_processor, lid_id2label
-
     if lid_model is None or lid_processor is None:
         return jsonify({"error": "LID model not ready"}), 503
 
     if "audio" not in request.files:
         return jsonify({"error": "No audio file"}), 400
-    
+
     file = request.files["audio"]
-    temp_path = f"lid_debug/upload_{int(time.time())}.wav"
-    os.makedirs("lid_debug", exist_ok=True)
-    file.save(temp_path)
 
     try:
-        # Load exactly like Colab
-        waveform, sr = librosa.load(temp_path, sr=16000, mono=True)
-        
+        # Decode via a temporary file (librosa needs a path for some codecs).
+        with tempfile.NamedTemporaryFile(suffix=".audio") as tmp:
+            file.save(tmp.name)
+            waveform, _sr = librosa.load(tmp.name, sr=16000, mono=True)
+        if waveform.size == 0:
+            return jsonify({"error": "Decoded audio is empty"}), 400
+
         # Energy check
         energy = np.mean(np.abs(waveform))
-        
+
         # Inference
         inputs = lid_processor(waveform, sampling_rate=16000, return_tensors="pt")
         inputs = {k: v.to(device) for k, v in inputs.items()}
@@ -2287,9 +2033,7 @@ def detect_lang_endpoint():
             probs = torch.softmax(logits, dim=-1)[0]
 
         ranked = sorted(
-            [(lid_id2label[i], probs[i].item()) for i in range(len(probs))],
-            key=lambda x: x[1],
-            reverse=True
+            [(lid_id2label[i], probs[i].item()) for i in range(len(probs))], key=lambda x: x[1], reverse=True
         )
 
         # Build top lists
@@ -2299,7 +2043,9 @@ def detect_lang_endpoint():
         indian_results = []
         for lang, p in ranked:
             if lang in INDIAN_LANGUAGES:
-                indian_results.append({"code": lang, "prob": p, "name": LANGUAGE_NAMES.get(LANGUAGE_CODE_MAP.get(lang, lang), lang)})
+                indian_results.append(
+                    {"code": lang, "prob": p, "name": LANGUAGE_NAMES.get(LANGUAGE_CODE_MAP.get(lang, lang), lang)}
+                )
 
         # Choose highest-confidence overall language (top_global[0]) if available, else fallback to top_indian
         selected_lang = None
@@ -2311,22 +2057,13 @@ def detect_lang_endpoint():
             selected_lang = indian_results[0]["code"]
             selected_prob = indian_results[0]["prob"]
 
-        # Persist selection to server state for this process
-        try:
-            if selected_lang is not None:
-                # set current_language to selected (store raw model code)
-                current_language = selected_lang
-        except Exception:
-            # ignore if current_language not used elsewhere
-            pass
-
         # Log the full result prefixed with Done! and a concise line with chosen language
         result_payload = {
             "status": "success",
             "energy": float(energy),
             "top_indian": indian_results[:3],
             "top_global": top_global_list,
-            "duration": len(waveform)/16000
+            "duration": len(waveform) / 16000,
         }
 
         print("Done!", result_payload)
@@ -2336,20 +2073,14 @@ def detect_lang_endpoint():
         return jsonify(result_payload)
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        print(f"❌ /detect-lang failed: {e}")
+        return jsonify({"error": "Language detection failed"}), 500
 
 
 @app.route("/ice-config")
 def ice_config():
     """Return ICE server configuration for WebRTC clients."""
-    ice_servers_json = [
-        {"urls": srv.urls} if not hasattr(srv, 'username') else
-        {"urls": srv.urls, "username": srv.username, "credential": srv.credential}
-        for srv in ICE_SERVERS
-    ]
-    return jsonify({"iceServers": ice_servers_json})
+    return jsonify({"iceServers": ICE_SERVER_CONFIG})
 
 
 @app.route("/ready")
@@ -2357,16 +2088,19 @@ def ready():
     """Check if all models are loaded and ready to accept calls."""
     whisper_ready = whisper_model is not None and whisper_processor is not None
     lid_ready = lid_model is not None and lid_processor is not None
-    
+
     all_ready = whisper_ready and lid_ready
-    
-    return jsonify({
-        "ready": all_ready,
-        "whisper_ready": whisper_ready,
-        "lid_ready": lid_ready,
-        "voice_turn_stream_enabled": settings.VOICE_TURN_STREAM_ENABLED,
-        "device": device
-    }), 200 if all_ready else 503
+
+    return jsonify(
+        {
+            "ready": all_ready,
+            "whisper_ready": whisper_ready,
+            "lid_ready": lid_ready,
+            "emergency_detection": emergency_status,
+            "voice_turn_stream_enabled": settings.VOICE_TURN_STREAM_ENABLED,
+            "device": device,
+        }
+    ), 200 if all_ready else 503
 
 
 @app.route("/healthz")
@@ -2380,7 +2114,8 @@ def healthz():
         "tts_backend": settings.TTS_BACKEND,
         "redis": llm_context.ping(),
         "ollama": check_ollama_status(),
-        "active_calls": metrics.get("active_calls", 0),
+        "emergency_detection": emergency_status,
+        "active_calls": metrics.get("active_calls"),
         "active_agent": active_agent["name"] if active_agent else None,
         "voice_turn_stream_enabled": settings.VOICE_TURN_STREAM_ENABLED,
     }
@@ -2389,20 +2124,10 @@ def healthz():
 
 @app.route("/metrics")
 def metrics_endpoint():
-    with metrics_lock:
-        snapshot = {
-            "calls_total": metrics.get("calls_total", 0),
-            "active_calls": metrics.get("active_calls", 0),
-            "utterances_total": metrics.get("utterances_total", 0),
-            "latencies": {
-                name: list(values)
-                for name, values in metrics.get("latencies", {}).items()
-            },
-        }
-    snapshot["latency_stats"] = get_latency_stats()
-    return jsonify(snapshot)
+    return jsonify(metrics.snapshot())
+
 
 if __name__ == "__main__":
     print("🚀 Signaling + Audio Processing Server Running")
     _warm_purpose_agents()
-    app.run("0.0.0.0", 8080)
+    app.run(settings.SERVER_HOST, settings.SERVER_PORT)
