@@ -120,9 +120,7 @@ class Settings:
     CONVERSATION_MEDIA_DIR: str = _env("CONVERSATION_MEDIA_DIR", "data/conversation_media")
 
     # WebRTC ICE configuration. TURN is optional but recommended behind NAT.
-    STUN_URLS: tuple = _env_list(
-        "STUN_URLS", "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"
-    )
+    STUN_URLS: tuple = _env_list("STUN_URLS", "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302")
     TURN_URLS: tuple = _env_list("TURN_URLS", "")
     TURN_USERNAME: str = _env("TURN_USERNAME", "")
     TURN_CREDENTIAL: str = _env("TURN_CREDENTIAL", "")
@@ -133,9 +131,7 @@ class Settings:
     # Emergency Detection
     ENABLE_EMERGENCY_DETECTION: bool = _env_bool("ENABLE_EMERGENCY_DETECTION", True)
     MIMI_MODEL: str = _env("MIMI_MODEL", "kyutai/mimi")
-    EMERGENCY_CLASSIFIER_PATH: str = _env(
-        "EMERGENCY_CLASSIFIER_PATH", "models/emergency_classifier.pt"
-    )
+    EMERGENCY_CLASSIFIER_PATH: str = _env("EMERGENCY_CLASSIFIER_PATH", "models/emergency_classifier.pt")
     DISTRESS_WINDOW: int = _env_int("DISTRESS_WINDOW", 5)
     DISTRESS_MIN_HITS: int = _env_int("DISTRESS_MIN_HITS", 3)
     EMERGENCY_THRESHOLD: float = _env_float("EMERGENCY_THRESHOLD", 0.7)

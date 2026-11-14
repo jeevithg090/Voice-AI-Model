@@ -1,9 +1,12 @@
 import json
 import os
+import re
 import sqlite3
 import threading
 import uuid
-from datetime import datetime
+from collections.abc import Iterator
+from contextlib import contextmanager
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -11,7 +14,16 @@ import soundfile as sf
 
 
 def _utc_now() -> str:
-    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z"
+
+
+_SAFE_TOKEN = re.compile(r"[^A-Za-z0-9_-]+")
+
+
+def _safe_token(value: str, default: str) -> str:
+    """Restrict values used in file names to a safe character set."""
+    cleaned = _SAFE_TOKEN.sub("", value or "")[:32]
+    return cleaned or default
 
 
 def _json_load(value: Any, fallback: Any) -> Any:
@@ -43,16 +55,31 @@ class AdminStore:
         self.media_root = media_root or os.getenv("CONVERSATION_MEDIA_DIR", "data/conversation_media")
         self._lock = threading.Lock()
 
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         os.makedirs(self.media_root, exist_ok=True)
 
         self._init_db()
         self._seed_defaults()
 
-    def _conn(self) -> sqlite3.Connection:
+    @contextmanager
+    def _conn(self) -> Iterator[sqlite3.Connection]:
+        """Open a connection, commit on success / roll back on error, always close.
+
+        (``sqlite3.Connection`` used directly as a context manager only manages
+        the transaction and leaks the connection.)
+        """
         conn = sqlite3.connect(self.db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def _init_db(self) -> None:
         ddl = """
@@ -112,10 +139,9 @@ class AdminStore:
 
         CREATE INDEX IF NOT EXISTS idx_turns_conversation ON turns(conversation_id);
         """
-        with self._lock:
-            with self._conn() as conn:
-                conn.executescript(ddl)
-                conn.commit()
+        with self._lock, self._conn() as conn:
+            conn.executescript(ddl)
+            conn.commit()
 
     def _seed_defaults(self) -> None:
         default_templates = [
@@ -196,74 +222,75 @@ class AdminStore:
 
         default_agent_name = "Default Voice Agent"
 
-        with self._lock:
-            with self._conn() as conn:
-                now = _utc_now()
-                for tpl in default_templates:
-                    existing = conn.execute(
-                        "SELECT id FROM templates WHERE name = ?",
-                        (tpl["name"],),
-                    ).fetchone()
-                    if existing:
-                        continue
-                    conn.execute(
-                        """
+        with self._lock, self._conn() as conn:
+            now = _utc_now()
+            for tpl in default_templates:
+                existing = conn.execute(
+                    "SELECT id FROM templates WHERE name = ?",
+                    (tpl["name"],),
+                ).fetchone()
+                if existing:
+                    continue
+                conn.execute(
+                    """
                         INSERT INTO templates (
                             name, description, system_prompt, defaults_json,
                             is_builtin, created_at, updated_at
                         ) VALUES (?, ?, ?, ?, ?, ?, ?)
                         """,
-                        (
-                            tpl["name"],
-                            tpl["description"],
-                            tpl["system_prompt"],
-                            _json_dump(tpl["defaults"]),
-                            tpl["is_builtin"],
-                            now,
-                            now,
-                        ),
-                    )
+                    (
+                        tpl["name"],
+                        tpl["description"],
+                        tpl["system_prompt"],
+                        _json_dump(tpl["defaults"]),
+                        tpl["is_builtin"],
+                        now,
+                        now,
+                    ),
+                )
 
-                agent_row = conn.execute("SELECT id, is_active FROM agents WHERE name = ?", (default_agent_name,)).fetchone()
-                if not agent_row:
-                    template_row = conn.execute(
-                        "SELECT id FROM templates WHERE name = ?",
-                        ("Emergency Response",),
-                    ).fetchone()
-                    template_id = int(template_row["id"]) if template_row else None
-                    conn.execute(
-                        """
+            agent_row = conn.execute(
+                "SELECT id, is_active FROM agents WHERE name = ?", (default_agent_name,)
+            ).fetchone()
+            if not agent_row:
+                template_row = conn.execute(
+                    "SELECT id FROM templates WHERE name = ?",
+                    ("Emergency Response",),
+                ).fetchone()
+                template_id = int(template_row["id"]) if template_row else None
+                conn.execute(
+                    """
                         INSERT INTO agents (
                             name, description, template_id, config_json,
                             is_active, created_at, updated_at
                         ) VALUES (?, ?, ?, ?, ?, ?, ?)
                         """,
-                        (
-                            default_agent_name,
-                            "Default production agent profile.",
-                            template_id,
-                            _json_dump(
-                                {
-                                    "assistant_name": "Asha",
-                                    "tone": "calm and practical",
-                                    "objective": "Help quickly with short spoken responses",
-                                    "temperature": 0.55,
-                                    "max_tokens": 230,
-                                }
-                            ),
-                            1,
-                            now,
-                            now,
+                    (
+                        default_agent_name,
+                        "Default production agent profile.",
+                        template_id,
+                        _json_dump(
+                            {
+                                "assistant_name": "Asha",
+                                "tone": "calm and practical",
+                                "objective": "Help quickly with short spoken responses",
+                                "temperature": 0.55,
+                                "max_tokens": 230,
+                            }
                         ),
-                    )
+                        1,
+                        now,
+                        now,
+                    ),
+                )
 
-                active_count = conn.execute("SELECT COUNT(*) AS c FROM agents WHERE is_active = 1").fetchone()["c"]
-                if active_count == 0:
-                    first_agent = conn.execute("SELECT id FROM agents ORDER BY id ASC LIMIT 1").fetchone()
-                    if first_agent:
-                        conn.execute("UPDATE agents SET is_active = 1 WHERE id = ?", (int(first_agent["id"]),))
+            active_count = conn.execute("SELECT COUNT(*) AS c FROM agents WHERE is_active = 1").fetchone()["c"]
+            if active_count == 0:
+                first_agent = conn.execute("SELECT id FROM agents ORDER BY id ASC LIMIT 1").fetchone()
+                if first_agent:
+                    conn.execute("UPDATE agents SET is_active = 1 WHERE id = ?", (int(first_agent["id"]),))
 
-                conn.commit()
+            conn.commit()
 
     def _normalize_template_row(self, row: sqlite3.Row) -> Dict[str, Any]:
         return {
@@ -288,20 +315,18 @@ class AdminStore:
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
-        if "template_name" in row.keys():
+        if "template_name" in row.keys():  # noqa: SIM118 (sqlite3.Row has no __contains__ by key)
             data["template_name"] = row["template_name"]
         return data
 
     def list_templates(self) -> List[Dict[str, Any]]:
-        with self._lock:
-            with self._conn() as conn:
-                rows = conn.execute("SELECT * FROM templates ORDER BY id DESC").fetchall()
+        with self._lock, self._conn() as conn:
+            rows = conn.execute("SELECT * FROM templates ORDER BY id DESC").fetchall()
         return [self._normalize_template_row(r) for r in rows]
 
     def get_template(self, template_id: int) -> Optional[Dict[str, Any]]:
-        with self._lock:
-            with self._conn() as conn:
-                row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
+        with self._lock, self._conn() as conn:
+            row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
         if not row:
             return None
         return self._normalize_template_row(row)
@@ -321,20 +346,19 @@ class AdminStore:
             defaults = {}
 
         now = _utc_now()
-        with self._lock:
-            with self._conn() as conn:
-                cur = conn.execute(
-                    """
+        with self._lock, self._conn() as conn:
+            cur = conn.execute(
+                """
                     INSERT INTO templates (
                         name, description, system_prompt, defaults_json,
                         is_builtin, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, 0, ?, ?)
                     """,
-                    (name, description, system_prompt, _json_dump(defaults), now, now),
-                )
-                conn.commit()
-                template_id = cur.lastrowid
-                row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
+                (name, description, system_prompt, _json_dump(defaults), now, now),
+            )
+            conn.commit()
+            template_id = cur.lastrowid
+            row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
         return self._normalize_template_row(row)
 
     def update_template(self, template_id: int, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -367,14 +391,13 @@ class AdminStore:
         values.append(_utc_now())
         values.append(template_id)
 
-        with self._lock:
-            with self._conn() as conn:
-                conn.execute(
-                    f"UPDATE templates SET {', '.join(updates)} WHERE id = ?",
-                    tuple(values),
-                )
-                conn.commit()
-                row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
+        with self._lock, self._conn() as conn:
+            conn.execute(
+                f"UPDATE templates SET {', '.join(updates)} WHERE id = ?",
+                tuple(values),
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM templates WHERE id = ?", (template_id,)).fetchone()
 
         if not row:
             return None
@@ -387,9 +410,8 @@ class AdminStore:
         LEFT JOIN templates t ON t.id = a.template_id
         ORDER BY a.id DESC
         """
-        with self._lock:
-            with self._conn() as conn:
-                rows = conn.execute(sql).fetchall()
+        with self._lock, self._conn() as conn:
+            rows = conn.execute(sql).fetchall()
         return [self._normalize_agent_row(r) for r in rows]
 
     def get_agent(self, agent_id: int) -> Optional[Dict[str, Any]]:
@@ -399,9 +421,8 @@ class AdminStore:
         LEFT JOIN templates t ON t.id = a.template_id
         WHERE a.id = ?
         """
-        with self._lock:
-            with self._conn() as conn:
-                row = conn.execute(sql, (agent_id,)).fetchone()
+        with self._lock, self._conn() as conn:
+            row = conn.execute(sql, (agent_id,)).fetchone()
         if not row:
             return None
         return self._normalize_agent_row(row)
@@ -415,9 +436,8 @@ class AdminStore:
         ORDER BY a.updated_at DESC
         LIMIT 1
         """
-        with self._lock:
-            with self._conn() as conn:
-                row = conn.execute(sql).fetchone()
+        with self._lock, self._conn() as conn:
+            row = conn.execute(sql).fetchone()
         if not row:
             return None
         return self._normalize_agent_row(row)
@@ -440,19 +460,18 @@ class AdminStore:
             config = {}
 
         now = _utc_now()
-        with self._lock:
-            with self._conn() as conn:
-                cur = conn.execute(
-                    """
+        with self._lock, self._conn() as conn:
+            cur = conn.execute(
+                """
                     INSERT INTO agents (
                         name, description, template_id, config_json,
                         is_active, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, 0, ?, ?)
                     """,
-                    (name, description, template_id, _json_dump(config), now, now),
-                )
-                conn.commit()
-                agent_id = cur.lastrowid
+                (name, description, template_id, _json_dump(config), now, now),
+            )
+            conn.commit()
+            agent_id = cur.lastrowid
         agent = self.get_agent(int(agent_id))
         if not agent:
             raise RuntimeError("Failed to load created agent")
@@ -493,28 +512,26 @@ class AdminStore:
         values.append(_utc_now())
         values.append(agent_id)
 
-        with self._lock:
-            with self._conn() as conn:
-                conn.execute(
-                    f"UPDATE agents SET {', '.join(updates)} WHERE id = ?",
-                    tuple(values),
-                )
-                conn.commit()
+        with self._lock, self._conn() as conn:
+            conn.execute(
+                f"UPDATE agents SET {', '.join(updates)} WHERE id = ?",
+                tuple(values),
+            )
+            conn.commit()
 
         return self.get_agent(agent_id)
 
     def set_active_agent(self, agent_id: int) -> Optional[Dict[str, Any]]:
-        with self._lock:
-            with self._conn() as conn:
-                exists = conn.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)).fetchone()
-                if not exists:
-                    return None
-                conn.execute("UPDATE agents SET is_active = 0")
-                conn.execute(
-                    "UPDATE agents SET is_active = 1, updated_at = ? WHERE id = ?",
-                    (_utc_now(), agent_id),
-                )
-                conn.commit()
+        with self._lock, self._conn() as conn:
+            exists = conn.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)).fetchone()
+            if not exists:
+                return None
+            conn.execute("UPDATE agents SET is_active = 0")
+            conn.execute(
+                "UPDATE agents SET is_active = 1, updated_at = ? WHERE id = ?",
+                (_utc_now(), agent_id),
+            )
+            conn.commit()
         return self.get_agent(agent_id)
 
     def _merge_metadata(self, base: Dict[str, Any], extra: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -534,24 +551,23 @@ class AdminStore:
         session_id = (session_id or "").strip() or str(uuid.uuid4())[:8]
         channel = (channel or "voice-turn").strip() or "voice-turn"
 
-        with self._lock:
-            with self._conn() as conn:
-                row = conn.execute(
-                    """
+        with self._lock, self._conn() as conn:
+            row = conn.execute(
+                """
                     SELECT * FROM conversations
                     WHERE session_id = ? AND channel = ? AND status = 'open'
                     ORDER BY id DESC
                     LIMIT 1
                     """,
-                    (session_id, channel),
-                ).fetchone()
+                (session_id, channel),
+            ).fetchone()
 
-                now = _utc_now()
-                if row:
-                    row_meta = _json_load(row["metadata_json"], {})
-                    merged_meta = self._merge_metadata(row_meta, metadata)
-                    conn.execute(
-                        """
+            now = _utc_now()
+            if row:
+                row_meta = _json_load(row["metadata_json"], {})
+                merged_meta = self._merge_metadata(row_meta, metadata)
+                conn.execute(
+                    """
                         UPDATE conversations
                         SET updated_at = ?,
                             language = ?,
@@ -559,46 +575,46 @@ class AdminStore:
                             metadata_json = ?
                         WHERE id = ?
                         """,
-                        (
-                            now,
-                            language or row["language"] or "en",
-                            agent_id,
-                            _json_dump(merged_meta),
-                            int(row["id"]),
-                        ),
-                    )
-                    conn.commit()
-                    conv_id = int(row["id"])
-                else:
-                    cur = conn.execute(
-                        """
+                    (
+                        now,
+                        language or row["language"] or "en",
+                        agent_id,
+                        _json_dump(merged_meta),
+                        int(row["id"]),
+                    ),
+                )
+                conn.commit()
+                conv_id = int(row["id"])
+            else:
+                cur = conn.execute(
+                    """
                         INSERT INTO conversations (
                             session_id, channel, agent_id, language, status,
                             metadata_json, created_at, updated_at
                         ) VALUES (?, ?, ?, ?, 'open', ?, ?, ?)
                         """,
-                        (
-                            session_id,
-                            channel,
-                            agent_id,
-                            language or "en",
-                            _json_dump(metadata or {}),
-                            now,
-                            now,
-                        ),
-                    )
-                    conn.commit()
-                    conv_id = int(cur.lastrowid)
+                    (
+                        session_id,
+                        channel,
+                        agent_id,
+                        language or "en",
+                        _json_dump(metadata or {}),
+                        now,
+                        now,
+                    ),
+                )
+                conn.commit()
+                conv_id = int(cur.lastrowid)
 
-                conv = conn.execute(
-                    """
+            conv = conn.execute(
+                """
                     SELECT c.*, a.name AS agent_name
                     FROM conversations c
                     LEFT JOIN agents a ON a.id = c.agent_id
                     WHERE c.id = ?
                     """,
-                    (conv_id,),
-                ).fetchone()
+                (conv_id,),
+            ).fetchone()
 
         return {
             "id": int(conv["id"]),
@@ -624,33 +640,32 @@ class AdminStore:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         now = _utc_now()
-        with self._lock:
-            with self._conn() as conn:
-                cur = conn.execute(
-                    """
+        with self._lock, self._conn() as conn:
+            cur = conn.execute(
+                """
                     INSERT INTO turns (
                         conversation_id, role, text, language,
                         audio_path, audio_mime, metadata_json, created_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (
-                        conversation_id,
-                        role,
-                        text or "",
-                        language or "en",
-                        audio_path,
-                        audio_mime,
-                        _json_dump(metadata or {}),
-                        now,
-                    ),
-                )
-                conn.execute(
-                    "UPDATE conversations SET updated_at = ?, language = ? WHERE id = ?",
-                    (now, language or "en", conversation_id),
-                )
-                conn.commit()
-                turn_id = int(cur.lastrowid)
-                row = conn.execute("SELECT * FROM turns WHERE id = ?", (turn_id,)).fetchone()
+                (
+                    conversation_id,
+                    role,
+                    text or "",
+                    language or "en",
+                    audio_path,
+                    audio_mime,
+                    _json_dump(metadata or {}),
+                    now,
+                ),
+            )
+            conn.execute(
+                "UPDATE conversations SET updated_at = ?, language = ? WHERE id = ?",
+                (now, language or "en", conversation_id),
+            )
+            conn.commit()
+            turn_id = int(cur.lastrowid)
+            row = conn.execute("SELECT * FROM turns WHERE id = ?", (turn_id,)).fetchone()
 
         return {
             "id": int(row["id"]),
@@ -681,9 +696,8 @@ class AdminStore:
         LIMIT ? OFFSET ?
         """
 
-        with self._lock:
-            with self._conn() as conn:
-                rows = conn.execute(sql, (limit, offset)).fetchall()
+        with self._lock, self._conn() as conn:
+            rows = conn.execute(sql, (limit, offset)).fetchall()
 
         out: List[Dict[str, Any]] = []
         for row in rows:
@@ -707,24 +721,23 @@ class AdminStore:
         return out
 
     def get_conversation(self, conversation_id: int) -> Optional[Dict[str, Any]]:
-        with self._lock:
-            with self._conn() as conn:
-                conv = conn.execute(
-                    """
+        with self._lock, self._conn() as conn:
+            conv = conn.execute(
+                """
                     SELECT c.*, a.name AS agent_name
                     FROM conversations c
                     LEFT JOIN agents a ON a.id = c.agent_id
                     WHERE c.id = ?
                     """,
-                    (conversation_id,),
-                ).fetchone()
-                if not conv:
-                    return None
+                (conversation_id,),
+            ).fetchone()
+            if not conv:
+                return None
 
-                turns = conn.execute(
-                    "SELECT * FROM turns WHERE conversation_id = ? ORDER BY id ASC",
-                    (conversation_id,),
-                ).fetchall()
+            turns = conn.execute(
+                "SELECT * FROM turns WHERE conversation_id = ? ORDER BY id ASC",
+                (conversation_id,),
+            ).fetchall()
 
         return {
             "id": int(conv["id"]),
@@ -756,12 +769,13 @@ class AdminStore:
     def save_audio_bytes(self, conversation_id: int, role: str, audio_bytes: bytes, ext: str = "wav") -> Optional[str]:
         if not audio_bytes:
             return None
-        rel_dir = f"conv_{conversation_id}"
+        rel_dir = f"conv_{int(conversation_id)}"
         abs_dir = os.path.join(self.media_root, rel_dir)
         os.makedirs(abs_dir, exist_ok=True)
 
-        ts = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
-        file_name = f"{ts}_{role}_{uuid.uuid4().hex[:8]}.{ext.strip('.') or 'wav'}"
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        safe_ext = _safe_token(ext.strip("."), "wav")
+        file_name = f"{ts}_{_safe_token(role, 'audio')}_{uuid.uuid4().hex[:8]}.{safe_ext}"
         rel_path = os.path.join(rel_dir, file_name)
         abs_path = os.path.join(self.media_root, rel_path)
 
@@ -784,12 +798,12 @@ class AdminStore:
         if audio.size == 0:
             return None
 
-        rel_dir = f"conv_{conversation_id}"
+        rel_dir = f"conv_{int(conversation_id)}"
         abs_dir = os.path.join(self.media_root, rel_dir)
         os.makedirs(abs_dir, exist_ok=True)
 
-        ts = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
-        file_name = f"{ts}_{role}_{uuid.uuid4().hex[:8]}.wav"
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        file_name = f"{ts}_{_safe_token(role, 'audio')}_{uuid.uuid4().hex[:8]}.wav"
         rel_path = os.path.join(rel_dir, file_name)
         abs_path = os.path.join(self.media_root, rel_path)
 

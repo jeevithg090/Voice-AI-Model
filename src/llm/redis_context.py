@@ -3,20 +3,15 @@ Redis Context Manager for Voice AI Pipeline
 Manages conversation context with key-value storage, TTL, and async summarization.
 """
 
-import redis
 import json
 import uuid
-import threading
-from typing import Optional, List, Dict, Any
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-# Import settings for configuration
-import sys
-import os
+import redis
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import settings
+from src.config import settings
 
 # Thread pool for async summarization
 _executor = ThreadPoolExecutor(max_workers=2)
@@ -33,11 +28,9 @@ def _generate_summary(history: List[Dict], ollama_url: str = None) -> str:
         ollama_url = settings.OLLAMA_BASE_URL
 
     # Build conversation text for summarization
-    conv_text = "\n".join(
-        [f"{msg['role'].upper()}: {msg['content']}" for msg in history]
-    )
+    conv_text = "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in history])
 
-    prompt = f"""Summarize this medical conversation in 2-3 sentences. 
+    prompt = f"""Summarize this medical conversation in 2-3 sentences.
 Focus on: patient symptoms, age, medical conditions, and key concerns.
 
 Conversation:
@@ -175,9 +168,7 @@ class RedisContextManager:
                 session["summarization_pending"] = False
                 key = self._get_key(session_id)
                 self.client.setex(key, self.session_ttl, json.dumps(session))
-                print(
-                    f"[INFO] Async summarization complete for {session_id}: {summary[:50]}..."
-                )
+                print(f"[INFO] Async summarization complete for {session_id}: {summary[:50]}...")
         except Exception as e:
             print(f"[ERROR] Async summarization failed: {e}")
         finally:
@@ -210,9 +201,7 @@ class RedisContextManager:
                 # Keep summary + recent turns
                 keep_count = self.summarize_threshold * 2
                 session["history"] = session["history"][-keep_count:]
-                print(
-                    f"[INFO] Trimmed with summary for {session_id}, keeping {keep_count} messages"
-                )
+                print(f"[INFO] Trimmed with summary for {session_id}, keeping {keep_count} messages")
             else:
                 # Fallback: simple trim if summarization not ready
                 session["history"] = session["history"][-max_messages:]
@@ -261,9 +250,7 @@ class RedisContextManager:
         max_messages = self.max_history * 2
         if history_len >= max_messages - 4 or session.get("needs_summarization"):
             # Good time to summarize - STT is processing, Ollama is idle!
-            summarize_count = min(
-                history_len // 2, 6
-            )  # Summarize first half, max 6 messages
+            summarize_count = min(history_len // 2, 6)  # Summarize first half, max 6 messages
             history_to_summarize = session["history"][:summarize_count]
 
             session["summarization_pending"] = True
@@ -299,13 +286,9 @@ class RedisContextManager:
         history_len = len(session.get("history", []))
         max_messages = self.max_history * 2
 
-        return history_len >= max_messages - 4 or session.get(
-            "needs_summarization", False
-        )
+        return history_len >= max_messages - 4 or session.get("needs_summarization", False)
 
-    def get_context_for_llm(
-        self, session_id: str, system_prompt: str = None
-    ) -> List[Dict[str, str]]:
+    def get_context_for_llm(self, session_id: str, system_prompt: str = None) -> List[Dict[str, str]]:
         """
         Get formatted context for Ollama chat API.
         Includes summary as context if available.
