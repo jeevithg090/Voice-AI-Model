@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Browser client for live WebRTC / WebSocket calls with the Indic voice AI agent." />
   <title>Solvathon AI Call Agent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -271,7 +272,7 @@
       <h2>Call Control</h2>
       <div class="row">
         <label for="backendUrl">Backend</label>
-        <input id="backendUrl" type="text" placeholder="http://165.245.140.34 or localhost:8081" />
+        <input id="backendUrl" type="text" placeholder="http://localhost:8080 or http://&lt;GPU_IP&gt;:8080" />
       </div>
 
       <div class="row">
@@ -323,7 +324,7 @@
       <div class="note">Remote audio output from the AI agent.</div>
       <audio id="remoteAudio" autoplay playsinline></audio>
       <div class="note" style="margin-top: 12px;">Logs</div>
-      <div class="log" id="log"></div>
+      <div class="log" id="log" role="log" aria-live="polite"></div>
     </section>
   </div>
 

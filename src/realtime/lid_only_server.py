@@ -1,14 +1,14 @@
 import asyncio
 import threading
-import time
-import numpy as np
-import librosa
-import torch
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import librosa
+import numpy as np
+import torch
 from aiortc import RTCPeerConnection, RTCSessionDescription
-from transformers import Wav2Vec2ForSequenceClassification, AutoFeatureExtractor
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from transformers import AutoFeatureExtractor, Wav2Vec2ForSequenceClassification
+
 from src.config import settings
 
 # -----------------------
@@ -17,8 +17,10 @@ from src.config import settings
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
+
 def run_loop():
     loop.run_forever()
+
 
 threading.Thread(target=run_loop, daemon=True).start()
 
@@ -43,11 +45,12 @@ model.eval()
 id2label = model.config.id2label
 
 # Only allow Indian languages
-INDIAN_LANGS = {'hin','tam','tel','kan','ben','guj','mal','mar','pan','ori','asm','urd'}
+INDIAN_LANGS = {"hin", "tam", "tel", "kan", "ben", "guj", "mal", "mar", "pan", "ori", "asm", "urd"}
 
 BUFFER_SECONDS = 10
 TARGET_SR = 16000
 audio_buffer = np.array([], dtype=np.float32)
+
 
 # -----------------------
 # Audio Processing
@@ -73,6 +76,7 @@ async def process_audio_track(track):
 
             await run_language_detection_live(segment)
 
+
 async def run_language_detection_live(audio_chunk_48k):
     print("🔎 Running Language Detection...")
 
@@ -88,15 +92,16 @@ async def run_language_detection_live(audio_chunk_48k):
             probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
 
         predictions = sorted(
-            [{'code': id2label[i], 'prob': float(p)} for i, p in enumerate(probs)],
-            key=lambda x: x['prob'], reverse=True
+            [{"code": id2label[i], "prob": float(p)} for i, p in enumerate(probs)],
+            key=lambda x: x["prob"],
+            reverse=True,
         )
 
         best = predictions[0]
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(f"🌍 TOP LANGUAGE: {best['code']} ({best['prob']:.2f})")
-        print("="*50)
+        print("=" * 50)
 
     except Exception as e:
         print("❌ LID ERROR:", e)
@@ -137,8 +142,6 @@ def offer():
 
     pc = RTCPeerConnection()
     pcs.add(pc)
-
-    
 
     @pc.on("track")
     def on_track(track):

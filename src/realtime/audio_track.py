@@ -1,14 +1,17 @@
 import asyncio
 import io
-import av
-from aiortc import MediaStreamTrack
 import time
 from fractions import Fraction
+
+import av
+from aiortc import MediaStreamTrack
+
 
 class TTSAudioTrack(MediaStreamTrack):
     """
     A MediaStreamTrack that streams audio from a queue of bytes (WAV/MP3).
     """
+
     kind = "audio"
 
     def __init__(self, loop=None):
@@ -16,7 +19,7 @@ class TTSAudioTrack(MediaStreamTrack):
         self.loop = loop
         self.queue = asyncio.Queue()
         self.samplerate = 48000
-        self.channels = 2 # Stereo for safety, though mono is fine
+        self.channels = 2  # Stereo for safety, though mono is fine
         self._start_time = None
         self._timestamp = 0
 
@@ -28,7 +31,7 @@ class TTSAudioTrack(MediaStreamTrack):
         try:
             # Decode using PyAV
             container = av.open(io.BytesIO(audio_bytes))
-            
+
             # Create a resampler to match WebRTC expectations (48kHz, Stereo, s16)
             resampler = av.AudioResampler(
                 format="s16",
@@ -43,9 +46,9 @@ class TTSAudioTrack(MediaStreamTrack):
                         self.loop.call_soon_threadsafe(self.queue.put_nowait, resampled_frame)
                     else:
                         self.queue.put_nowait(resampled_frame)
-                    
+
             print(f"🎵 Queue size: {self.queue.qsize()} frames")
-            
+
         except Exception as e:
             print(f"❌ Audio Decode Error: {e}")
 
@@ -59,14 +62,14 @@ class TTSAudioTrack(MediaStreamTrack):
 
         # Get frame from queue
         frame = await self.queue.get()
-        
+
         # Update frame timing
         frame.pts = self._timestamp
         frame.time_base = Fraction(1, self.samplerate)
-        
+
         # Calculate next timestamp
         # 48000Hz * samples / 48000 = samples
         # typical frame is 960 samples (20ms)
         self._timestamp += frame.samples
-        
+
         return frame
