@@ -1,4 +1,5 @@
 import os
+
 import librosa
 import soundfile as sf
 from tqdm import tqdm
@@ -40,4 +41,3 @@ for root, _, files in os.walk(SRC_DIR):
         out_path = os.path.join(out_dir, f"ravdess_{actor}_{fname}")
 
         sf.write(out_path, y_trim, TARGET_SR)
-

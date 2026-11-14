@@ -1,6 +1,7 @@
 import os
-import pandas as pd
+
 import librosa
+import pandas as pd
 import soundfile as sf
 from tqdm import tqdm
 
@@ -29,5 +30,5 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
     if len(y_trim) < TARGET_SR * 2:
         continue
 
-    fname = f"cv_{row['filename'].replace('/', '_').replace('.mp3','.wav')}"
+    fname = f"cv_{row['filename'].replace('/', '_').replace('.mp3', '.wav')}"
     sf.write(os.path.join(OUT_DIR, fname), y_trim, TARGET_SR)

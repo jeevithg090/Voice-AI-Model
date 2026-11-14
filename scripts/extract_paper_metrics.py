@@ -25,7 +25,6 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "paper" / "evidence"
 
@@ -303,10 +302,12 @@ def build_markdown(snapshot: Dict[str, Any]) -> str:
     lines.append("## LID Timing (Notebook-Extracted)")
     lines.append("")
     lid_stats = lid["stats_ms"]
+
     def _fmt(value: Optional[float]) -> str:
         if value is None:
             return "-"
         return f"{value:.2f}"
+
     lines.append("| n | mean_ms | median_ms | min_ms | max_ms | p95_ms |")
     lines.append("|---:|---:|---:|---:|---:|---:|")
     lines.append(
@@ -332,9 +333,7 @@ def build_markdown(snapshot: Dict[str, Any]) -> str:
     for row in llm["prompt_runs"]:
         latency = row.get("latency_ms")
         latency_cell = f"{latency:.2f}" if isinstance(latency, (int, float)) else "-"
-        lines.append(
-            f"| {row['prompt']} | {row.get('ok')} | {latency_cell} | {row.get('response_chars', '-')} |"
-        )
+        lines.append(f"| {row['prompt']} | {row.get('ok')} | {latency_cell} | {row.get('response_chars', '-')} |")
     lines.append("")
 
     lines.append("## Connectivity and Reliability")
@@ -360,11 +359,13 @@ def build_markdown(snapshot: Dict[str, Any]) -> str:
 
     lines.append("## Voice-Turn Examples")
     lines.append("")
-    lines.append("| file | language | transcript_chars | response_chars | decoded_audio_bytes | input_duration_s | output_duration_s |")
+    lines.append(
+        "| file | language | transcript_chars | response_chars | decoded_audio_bytes | input_duration_s | output_duration_s |"
+    )
     lines.append("|---|---|---:|---:|---:|---:|---:|")
     for row in voice:
-        in_d = ((row.get("input_wav") or {}).get("duration_s"))
-        out_d = ((row.get("output_wav") or {}).get("duration_s"))
+        in_d = (row.get("input_wav") or {}).get("duration_s")
+        out_d = (row.get("output_wav") or {}).get("duration_s")
         lines.append(
             f"| {Path(row['source']).name} | {row.get('language')} | {row.get('transcript_chars')} | "
             f"{row.get('response_chars')} | {row.get('audio_decoded_bytes')} | "

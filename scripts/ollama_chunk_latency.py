@@ -170,7 +170,9 @@ def parse() -> Cfg:
     ap = argparse.ArgumentParser()
     ap.add_argument("--endpoint", default="http://127.0.0.1:11434/api/generate")
     ap.add_argument("--model", default="llama3.2:3b")
-    ap.add_argument("--prompt", default="Caller says there is smoke in the building. Give a short safety-first response.")
+    ap.add_argument(
+        "--prompt", default="Caller says there is smoke in the building. Give a short safety-first response."
+    )
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--warmup", type=int, default=1)
     ap.add_argument("--num-predict", type=int, default=64)

@@ -1,7 +1,7 @@
 import torch
-from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.datasets.speech_dataset import SpeechDataset
@@ -33,7 +33,6 @@ for epoch in range(10):
 
         total_loss += loss.item()
 
-    print(f"Epoch {epoch+1}, Loss: {total_loss/len(loader):.4f}")
+    print(f"Epoch {epoch + 1}, Loss: {total_loss / len(loader):.4f}")
 
 torch.save(model.state_dict(), "models/emergency_embedding_model.pt")
-

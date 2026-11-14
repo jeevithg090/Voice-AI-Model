@@ -1,8 +1,10 @@
 import os
 import random
-import torch
+
 import librosa
-from transformers import MimiModel, AutoFeatureExtractor
+import torch
+from transformers import AutoFeatureExtractor, MimiModel
+
 from src.models.emergency_classifier import MimiEmergencyClassifier
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"

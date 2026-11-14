@@ -198,11 +198,7 @@ The system uses free TURN servers (`openrelay.metered.ca`) for NAT traversal. If
    ```python
    ICE_SERVERS = [
        RTCIceServer(urls="stun:stun.l.google.com:19302"),
-       RTCIceServer(
-           urls="turn:your-turn-server.com:3478",
-           username="your-username",
-           credential="your-password"
-       )
+       RTCIceServer(urls="turn:your-turn-server.com:3478", username="your-username", credential="your-password"),
    ]
    ```
 

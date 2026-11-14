@@ -1,7 +1,9 @@
 import time
-import torch
+
 import librosa
-from transformers import MimiModel, AutoFeatureExtractor
+import torch
+from transformers import AutoFeatureExtractor, MimiModel
+
 from src.models.emergency_classifier import MimiEmergencyClassifier
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -18,7 +20,9 @@ clf.load_state_dict(torch.load("models/emergency_classifier.pt", map_location=de
 clf.eval()
 
 # Test file (change if you want)
-test_file = "data/processed/emergency/" + next(f for f in __import__("os").listdir("data/processed/emergency") if f.endswith(".wav"))
+test_file = "data/processed/emergency/" + next(
+    f for f in __import__("os").listdir("data/processed/emergency") if f.endswith(".wav")
+)
 print("Testing on:", test_file)
 
 audio, sr = librosa.load(test_file, sr=fe.sampling_rate)

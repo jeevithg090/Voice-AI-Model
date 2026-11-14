@@ -1,0 +1,15 @@
+# Lint / test tooling plus the lightweight runtime libraries exercised by the
+# unit tests. Install the full stack (requirements.txt) for the server smoke tests.
+pytest>=8.0
+ruff==0.17.5
+fakeredis>=2.20
+numpy
+soundfile
+requests
+redis
+flask
+faiss-cpu
+edge-tts
+av
+python-dotenv
+audioop-lts; python_version >= "3.13"

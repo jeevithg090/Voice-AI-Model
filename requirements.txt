@@ -24,3 +24,5 @@ pathvalidate
 gunicorn
 gevent
 gevent-websocket
+python-dotenv
+audioop-lts; python_version >= "3.13"

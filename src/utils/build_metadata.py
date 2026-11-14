@@ -1,10 +1,11 @@
-import os
 import csv
+import os
 
 ROOT = "data/processed_tokens"
 OUT_CSV = "data/metadata.csv"
 
 rows = []
+
 
 def get_speaker_id(fname):
     if fname.startswith("ravdess"):
@@ -13,6 +14,7 @@ def get_speaker_id(fname):
     else:
         # Common Voice — use filename as pseudo speaker
         return fname.split("_")[-1].replace(".pt", "")
+
 
 for label_name, label in [("normal", 0), ("emergency", 1)]:
     folder = os.path.join(ROOT, label_name)
@@ -23,12 +25,7 @@ for label_name, label in [("normal", 0), ("emergency", 1)]:
         speaker_id = get_speaker_id(fname)
         source = "ravdess" if fname.startswith("ravdess") else "commonvoice"
 
-        rows.append([
-            os.path.join(ROOT, label_name, fname),
-            label,
-            speaker_id,
-            source
-        ])
+        rows.append([os.path.join(ROOT, label_name, fname), label, speaker_id, source])
 
 with open(OUT_CSV, "w", newline="") as f:
     writer = csv.writer(f)

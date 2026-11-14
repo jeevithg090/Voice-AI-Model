@@ -1,4 +1,5 @@
 import os
+
 import librosa
 import soundfile as sf
 from tqdm import tqdm
@@ -22,4 +23,3 @@ for fname in tqdm(files):
         y = librosa.util.fix_length(y, size=CLIP_LEN)
 
     sf.write(os.path.join(DST_DIR, fname), y, TARGET_SR)
-

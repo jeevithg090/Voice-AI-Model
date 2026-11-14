@@ -1,16 +1,18 @@
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add src to path
 sys.path.append(os.getcwd())
+
 
 async def test_llm_module():
     print("🧪 Testing src.llm module...")
     try:
         from src.llm.embedding_agent import process_query
+
         print("✅ Successfully imported src.llm.embedding_agent")
-        
+
         # Test a simple query (assuming Ollama is up, but handle if not)
         print("   Running test query...")
         try:
@@ -27,10 +29,12 @@ async def test_llm_module():
         print(f"❌ Unexpected error: {e}")
         sys.exit(1)
 
+
 def test_server_import():
     print("\n🧪 Testing signaling_server import...")
     try:
-        import src.realtime.signaling_server
+        import src.realtime.signaling_server  # noqa: F401
+
         print("✅ Successfully imported src.realtime.signaling_server")
     except ImportError as e:
         print(f"❌ Failed to import signaling_server: {e}")
@@ -39,7 +43,8 @@ def test_server_import():
         print(f"❌ Error importing signaling_server: {e}")
         # It might fail due to missing models or env vars, but syntax should be fine
         if "No module named" in str(e):
-             sys.exit(1)
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     test_server_import()

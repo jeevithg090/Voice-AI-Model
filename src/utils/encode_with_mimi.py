@@ -1,8 +1,9 @@
 import os
-import torch
+
 import librosa
+import torch
 from tqdm import tqdm
-from transformers import MimiModel, AutoFeatureExtractor
+from transformers import AutoFeatureExtractor, MimiModel
 
 SRC_ROOT = "data/processed"
 DST_ROOT = "data/processed_tokens"
@@ -16,6 +17,7 @@ model.eval()
 feature_extractor = AutoFeatureExtractor.from_pretrained("kyutai/mimi")
 TARGET_SR = feature_extractor.sampling_rate
 
+
 def encode_folder(label):
     src_dir = os.path.join(SRC_ROOT, label)
     dst_dir = os.path.join(DST_ROOT, label)
@@ -28,21 +30,15 @@ def encode_folder(label):
 
         audio, sr = librosa.load(path, sr=TARGET_SR)
 
-        inputs = feature_extractor(
-            raw_audio=audio,
-            sampling_rate=TARGET_SR,
-            return_tensors="pt"
-        ).to(device)
+        inputs = feature_extractor(raw_audio=audio, sampling_rate=TARGET_SR, return_tensors="pt").to(device)
 
         with torch.no_grad():
             encoded = model.encode(inputs["input_values"])
 
         codes = encoded.audio_codes.squeeze(0).cpu()
 
-        torch.save(
-            {"acoustic_codes": codes},
-            os.path.join(dst_dir, fname.replace(".wav", ".pt"))
-        )
+        torch.save({"acoustic_codes": codes}, os.path.join(dst_dir, fname.replace(".wav", ".pt")))
+
 
 encode_folder("normal")
 encode_folder("emergency")

@@ -1,8 +1,9 @@
-import time
-import torch
-import librosa
-from transformers import MimiModel, AutoFeatureExtractor
 import os
+import time
+
+import librosa
+import torch
+from transformers import AutoFeatureExtractor, MimiModel
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 print("Using device:", device)

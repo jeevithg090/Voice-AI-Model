@@ -1,6 +1,7 @@
-import pandas as pd
-import random
 import json
+import random
+
+import pandas as pd
 
 random.seed(42)
 
@@ -14,9 +15,9 @@ for source in df["source"].unique():
     random.shuffle(speakers)
 
     n = len(speakers)
-    train_spk = speakers[:int(0.7*n)]
-    val_spk   = speakers[int(0.7*n):int(0.85*n)]
-    test_spk  = speakers[int(0.85*n):]
+    train_spk = speakers[: int(0.7 * n)]
+    val_spk = speakers[int(0.7 * n) : int(0.85 * n)]
+    test_spk = speakers[int(0.85 * n) :]
 
     for _, row in sub.iterrows():
         if row["speaker_id"] in train_spk:
