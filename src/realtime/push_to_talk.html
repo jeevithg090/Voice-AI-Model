@@ -1,317 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Press-and-hold voice turn client for the Indic voice AI agent (works without WebRTC)." />
-  <title>Voice Agent Push To Talk</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #08131d;
-      --bg-soft: #0f2130;
-      --card: rgba(16, 31, 45, 0.88);
-      --ink: #e8f1f8;
-      --muted: #96afc3;
-      --line: rgba(157, 184, 205, 0.2);
-      --brand: #1ea6a4;
-      --brand-2: #0d7d9e;
-      --danger: #de5f4c;
-      --ok: #3fc17f;
-      --warn: #f0b14f;
-      --shadow: 0 22px 55px rgba(2, 8, 13, 0.52);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Space Grotesk", sans-serif;
-      color: var(--ink);
-      min-height: 100vh;
-      background:
-        radial-gradient(900px 500px at 20% -10%, rgba(30, 166, 164, 0.2), transparent 60%),
-        radial-gradient(800px 460px at 90% 0%, rgba(13, 125, 158, 0.28), transparent 55%),
-        linear-gradient(155deg, #071119, #0d1822 45%, #0b1b29);
-      padding: 22px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .shell {
-      width: min(980px, 100%);
-      display: grid;
-      gap: 16px;
-    }
-
-    .header {
-      padding: 22px 24px;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-
-    .title {
-      margin: 0;
-      font-size: clamp(1.45rem, 3vw, 2rem);
-      letter-spacing: 0.02em;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      margin-top: 8px;
-      font-size: 0.95rem;
-    }
-
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .grid .field:first-child {
-      grid-column: span 3;
-    }
-
-    .field {
-      display: grid;
-      gap: 7px;
-    }
-
-    label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    input, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: var(--bg-soft);
-      color: var(--ink);
-      border-radius: 12px;
-      font-size: 0.95rem;
-      padding: 11px 12px;
-      font-family: inherit;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: rgba(30, 166, 164, 0.8);
-      box-shadow: 0 0 0 3px rgba(30, 166, 164, 0.18);
-    }
-
-    .status-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-      align-items: center;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 8px 11px;
-      font-size: 0.84rem;
-      color: var(--muted);
-      background: rgba(8, 19, 29, 0.55);
-    }
-
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #6f8396;
-    }
-
-    .dot.ok { background: var(--ok); box-shadow: 0 0 14px rgba(63, 193, 127, 0.45); }
-    .dot.warn { background: var(--warn); box-shadow: 0 0 14px rgba(240, 177, 79, 0.45); }
-    .dot.bad { background: var(--danger); box-shadow: 0 0 14px rgba(222, 95, 76, 0.5); }
-
-    .hold-wrap {
-      display: grid;
-      place-items: center;
-      padding: 18px 10px 12px;
-      border: 1px dashed rgba(157, 184, 205, 0.28);
-      border-radius: 16px;
-      background: rgba(8, 19, 29, 0.32);
-    }
-
-    .hold-btn {
-      width: min(360px, 100%);
-      border: 0;
-      border-radius: 14px;
-      padding: 17px 18px;
-      color: #e9fffc;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      background: linear-gradient(120deg, var(--brand), var(--brand-2));
-      box-shadow: 0 12px 28px rgba(8, 38, 58, 0.45);
-      transition: transform 0.12s ease, filter 0.16s ease;
-      touch-action: none;
-      user-select: none;
-    }
-
-    .hold-btn:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-    }
-
-    .hold-btn.active {
-      transform: scale(0.99);
-      filter: saturate(1.2) brightness(1.05);
-      background: linear-gradient(120deg, #cf5746, #b53c35);
-    }
-
-    .hint {
-      margin-top: 11px;
-      color: var(--muted);
-      font-size: 0.86rem;
-      text-align: center;
-    }
-
-    .play-cta {
-      border: 1px solid rgba(240, 177, 79, 0.55);
-      border-radius: 10px;
-      background: rgba(240, 177, 79, 0.14);
-      color: #ffeac0;
-      font-weight: 600;
-      padding: 9px 12px;
-      cursor: pointer;
-      width: fit-content;
-      display: none;
-    }
-
-    .play-cta.show {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .chat {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 13px 14px;
-      max-height: 330px;
-      overflow: auto;
-      background: rgba(8, 19, 29, 0.45);
-    }
-
-    .line {
-      padding: 10px 11px;
-      border-radius: 11px;
-      margin-bottom: 10px;
-      font-size: 0.93rem;
-      line-height: 1.45;
-    }
-
-    .line.user {
-      background: rgba(30, 166, 164, 0.16);
-      border: 1px solid rgba(30, 166, 164, 0.35);
-    }
-
-    .line.bot {
-      background: rgba(13, 125, 158, 0.18);
-      border: 1px solid rgba(13, 125, 158, 0.35);
-    }
-
-    .meta {
-      display: block;
-      margin-top: 4px;
-      font-family: "IBM Plex Mono", monospace;
-      color: #87a8be;
-      font-size: 0.74rem;
-    }
-
-    .empty {
-      color: var(--muted);
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 18px 10px;
-    }
-
-    @media (max-width: 860px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .grid .field:first-child {
-        grid-column: span 1;
-      }
-    }
-  </style>
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Voice AI Model" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/ui.css" />
+  <script>try{var t=localStorage.getItem("voiceai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script src="/static/ui.js"></script>
+  <title>Push to talk · Voice AI Model</title>
+  <meta name="description" content="Press-and-hold voice turns with the Indic voice AI agent. Works on any network, no WebRTC needed." />
+  <meta property="og:title" content="Push to talk · Voice AI Model" />
+  <meta property="og:description" content="Press-and-hold voice turns with the Indic voice AI agent. Works on any network, no WebRTC needed." />
 </head>
 <body>
-  <div class="shell">
-    <section class="header">
-      <h1 class="title">Multilingual Voice Agent</h1>
-      <div class="subtitle">Press and hold to record. Release to upload a single turn. Server replies with generated voice.</div>
-    </section>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M14 28v8M23 20v24M32 12v40M41 22v20M50 27v10"/></g></svg>
+        <span>Voice AI Model</span>
+      </a>
+      <nav class="app-nav" aria-label="Main">
+        <ul>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/call">Call</a></li>
+          <li><a href="/push-to-talk">Push to talk</a></li>
+          <li><a href="/client">Live client</a></li>
+          <li><a href="/lid-test">Language ID</a></li>
+          <li><a href="/admin">Admin</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-ghost btn-icon theme-toggle" type="button" data-theme-toggle aria-label="Toggle colour theme"></button>
+    </div>
+  </header>
 
-    <section class="panel">
-      <div class="grid">
-        <div class="field">
-          <label for="backendUrl">Backend URL (ngrok/local)</label>
-          <input id="backendUrl" placeholder="https://xxxx.ngrok-free.app" />
+  <main id="main" class="container">
+    <div class="page-head">
+      <span class="eyebrow">Push to talk</span>
+      <h1>Hold, speak, release</h1>
+      <p class="lead">Each turn is uploaded as one clip and the reply streams back as audio. Choose what the agent is for and which language you will speak.</p>
+    </div>
+
+    <div class="grid grid-main">
+      <section class="card stack" aria-labelledby="talk-title">
+        <div class="card-head" style="margin-bottom: 0">
+          <h2 id="talk-title">Talk</h2>
+          <div class="status-row" aria-label="Status">
+            <span class="pill" id="pillServer" data-state="busy"><span class="dot" aria-hidden="true"></span>Server: <strong data-value>checking</strong></span>
+            <span class="pill" id="pillMic"><span class="dot" aria-hidden="true"></span>Mic: <strong data-value>idle</strong></span>
+            <span class="pill" id="pillTurn"><span class="dot" aria-hidden="true"></span>Turn: <strong data-value>ready</strong></span>
+          </div>
         </div>
-        <div class="field">
-          <label for="agentType">Voice Agent Purpose</label>
-          <select id="agentType">
-            <option value="hospital_kiosk">Hospital Kiosk</option>
-            <option value="college_admission">College Admission</option>
-            <option value="laptop_support">Laptop Customer Support</option>
-          </select>
+
+        <div class="alert alert-warning" id="micWarning" hidden>
+          <div>
+            <p class="alert-title">Microphone needs a secure page</p>
+            <p>Open this page over HTTPS or on <code>localhost</code> (for example through an SSH tunnel) so the browser allows the microphone.</p>
+          </div>
         </div>
-        <div class="field">
-          <label for="language">Language</label>
-          <select id="language">
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="ta">Tamil</option>
-            <option value="te">Telugu</option>
-            <option value="kn">Kannada</option>
-            <option value="auto">Auto Detect</option>
-          </select>
+
+        <div class="alert alert-error" id="turnError" role="alert" hidden>
+          <div>
+            <p class="alert-title">Something went wrong</p>
+            <p id="turnErrorText"></p>
+          </div>
         </div>
-      </div>
 
-      <div class="status-row">
-        <div class="pill"><span class="dot" id="dotServer"></span> <span id="serverState">Server: checking</span></div>
-        <div class="pill"><span class="dot" id="dotMic"></span> <span id="micState">Mic: idle</span></div>
-        <div class="pill"><span class="dot" id="dotTurn"></span> <span id="turnState">Turn: ready</span></div>
-      </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="agentType">Agent purpose</label>
+            <select class="select" id="agentType">
+              <option value="hospital_kiosk">Hospital Kiosk</option>
+              <option value="college_admission">College Admission</option>
+              <option value="laptop_support">Laptop Customer Support</option>
+            </select>
+            <span class="hint" id="agentDescription"></span>
+          </div>
+          <div class="field">
+            <label for="language">Language</label>
+            <select class="select" id="language">
+              <option value="en">English</option>
+              <option value="hi">Hindi</option>
+              <option value="ta">Tamil</option>
+              <option value="te">Telugu</option>
+              <option value="kn">Kannada</option>
+              <option value="auto">Auto-detect</option>
+            </select>
+          </div>
+        </div>
 
-      <div class="hold-wrap">
-        <button id="holdButton" class="hold-btn" type="button">Hold To Talk</button>
-        <div class="hint">Desktop: hold mouse button. Mobile: press and hold touch.</div>
-      </div>
-      <button id="playReplyButton" class="play-cta" type="button">Tap to play reply</button>
-    </section>
+        <div class="ptt">
+          <button id="holdButton" class="ptt-btn" type="button" aria-describedby="hold-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+            <span data-label>Hold to talk</span>
+          </button>
+          <p class="hint" id="hold-hint">Press and hold with the mouse or a finger, or hold <kbd>Space</kbd> while the button is focused. Release to send.</p>
+          <button id="playReplyButton" class="btn btn-primary" type="button" hidden>Play reply</button>
+        </div>
 
-    <section class="panel">
-      <div class="chat" id="chatLog">
-        <div class="empty">No turns yet. Hold the button and speak.</div>
-      </div>
-    </section>
-  </div>
+        <details>
+          <summary>Advanced: backend URL</summary>
+          <div class="field" style="margin-top: var(--space-2)">
+            <label for="backendUrl">Backend URL</label>
+            <input class="input" id="backendUrl" type="url" inputmode="url" spellcheck="false" placeholder="https://your-server.example"
+              aria-describedby="backendUrl-hint backendUrl-error" />
+            <span class="hint" id="backendUrl-hint">Use a public tunnel URL or the GPU server address when this page is hosted elsewhere.</span>
+            <span class="field-error" id="backendUrl-error"></span>
+          </div>
+        </details>
+      </section>
+
+      <section class="card" aria-labelledby="chat-title">
+        <div class="card-head">
+          <div>
+            <h2 id="chat-title">Conversation</h2>
+            <p>Your transcript and the agent's reply, with timings.</p>
+          </div>
+          <button class="btn btn-sm" id="btnClear" type="button">Clear</button>
+        </div>
+        <div class="chat" id="chatLog" role="log" aria-live="polite" aria-label="Conversation">
+          <div class="empty-state" data-empty>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <strong>No turns yet</strong>
+            <span>Hold the button and speak.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
 
   <audio id="remoteAudio" autoplay playsinline></audio>
 
@@ -319,20 +139,24 @@
     const backendInput = document.getElementById("backendUrl");
     const languageSelect = document.getElementById("language");
     const agentTypeSelect = document.getElementById("agentType");
+    const agentDescription = document.getElementById("agentDescription");
     const holdButton = document.getElementById("holdButton");
+    const holdLabel = holdButton.querySelector("[data-label]");
     const chatLog = document.getElementById("chatLog");
     const remoteAudio = document.getElementById("remoteAudio");
     const playReplyButton = document.getElementById("playReplyButton");
+    const btnClear = document.getElementById("btnClear");
+    const micWarning = document.getElementById("micWarning");
+    const turnError = document.getElementById("turnError");
+    const turnErrorText = document.getElementById("turnErrorText");
 
-    const dotServer = document.getElementById("dotServer");
-    const dotMic = document.getElementById("dotMic");
-    const dotTurn = document.getElementById("dotTurn");
-    const serverState = document.getElementById("serverState");
-    const micState = document.getElementById("micState");
-    const turnState = document.getElementById("turnState");
+    const pillServer = document.getElementById("pillServer");
+    const pillMic = document.getElementById("pillMic");
+    const pillTurn = document.getElementById("pillTurn");
 
-    const storedBackend = localStorage.getItem("pushTalkBackendUrl");
-    backendInput.value = storedBackend || window.location.origin;
+    const getBackendUrl = UI.bindBackendInput(backendInput, "pushTalkBackendUrl", async () => {
+      await Promise.all([checkServer(), loadAgentTypes()]);
+    });
 
     let localStream = null;
     let mediaRecorder = null;
@@ -344,36 +168,37 @@
     let audioQueue = [];
     let isAudioPlaying = false;
     let streamEnabled = true;
+    let agentDescriptions = {};
 
-    function normalizeBackendUrl(raw) {
-      let value = (raw || "").trim();
-      if (!value) value = window.location.origin;
-      if (!/^https?:\/\//i.test(value)) {
-        value = `${window.location.protocol}//${value}`;
-      }
-      return value.replace(/\/+$/, "");
+    const EMPTY_HTML = chatLog.innerHTML;
+
+    function showError(message) {
+      turnErrorText.textContent = message;
+      turnError.hidden = false;
     }
 
-    function getBackendUrl() {
-      return normalizeBackendUrl(backendInput.value);
+    function clearError() {
+      turnError.hidden = true;
     }
 
-    function setStatus(dot, label, text, level) {
-      dot.className = `dot ${level || ""}`.trim();
-      label.textContent = text;
+    function setHoldLabel(text) {
+      holdLabel.textContent = text;
     }
 
     function appendLine(role, text, extra) {
-      if (chatLog.querySelector(".empty")) {
-        chatLog.innerHTML = "";
-      }
+      const empty = chatLog.querySelector("[data-empty]");
+      if (empty) empty.remove();
       const row = document.createElement("div");
-      row.className = `line ${role === "user" ? "user" : "bot"}`;
-      row.textContent = text || "(empty)";
+      row.className = `bubble ${role === "user" ? "user" : "bot"}`;
+      const who = document.createElement("span");
+      who.className = "who";
+      who.textContent = role === "user" ? "You" : "Agent";
+      const body = document.createElement("div");
+      body.textContent = text || "(empty)";
       const meta = document.createElement("span");
       meta.className = "meta";
-      meta.textContent = `${new Date().toLocaleTimeString()}${extra ? ` | ${extra}` : ""}`;
-      row.appendChild(meta);
+      meta.textContent = `${new Date().toLocaleTimeString()}${extra ? ` · ${extra}` : ""}`;
+      row.append(who, body, meta);
       chatLog.appendChild(row);
       chatLog.scrollTop = chatLog.scrollHeight;
     }
@@ -393,11 +218,11 @@
     }
 
     function showPlayCta() {
-      playReplyButton.classList.add("show");
+      playReplyButton.hidden = false;
     }
 
     function hidePlayCta() {
-      playReplyButton.classList.remove("show");
+      playReplyButton.hidden = true;
     }
 
     function clearPlaybackUrl() {
@@ -409,7 +234,7 @@
 
     function resetAudioQueue() {
       remoteAudio.pause();
-      remoteAudio.src = "";
+      remoteAudio.removeAttribute("src");
       remoteAudio.srcObject = null;
       isAudioPlaying = false;
       for (const item of audioQueue) {
@@ -486,17 +311,20 @@
     async function checkServer() {
       try {
         const res = await fetch(`${getBackendUrl()}/ready`);
-        if (!res.ok) throw new Error(String(res.status));
         const payload = await res.json();
         streamEnabled = Boolean(payload.voice_turn_stream_enabled !== false);
         if (payload.ready) {
-          setStatus(dotServer, serverState, streamEnabled ? "Server: ready (stream)" : "Server: ready (legacy)", "ok");
+          UI.setPill(pillServer, streamEnabled ? "ready (streaming)" : "ready", "ok");
         } else {
-          setStatus(dotServer, serverState, "Server: loading", "warn");
+          UI.setPill(pillServer, "loading models", "busy");
         }
       } catch (err) {
-        setStatus(dotServer, serverState, "Server: offline", "bad");
+        UI.setPill(pillServer, "offline", "bad");
       }
+    }
+
+    function showAgentDescription() {
+      agentDescription.textContent = agentDescriptions[agentTypeSelect.value] || "";
     }
 
     async function loadAgentTypes() {
@@ -509,15 +337,18 @@
 
         const selected = agentTypeSelect.value;
         agentTypeSelect.innerHTML = "";
+        agentDescriptions = {};
         for (const item of types) {
           const opt = document.createElement("option");
           opt.value = item.type;
           opt.textContent = item.label || item.type;
           agentTypeSelect.appendChild(opt);
+          agentDescriptions[item.type] = item.description || "";
         }
         if (types.some((x) => x.type === selected)) {
           agentTypeSelect.value = selected;
         }
+        showAgentDescription();
       } catch (err) {
         // Keep static defaults.
       }
@@ -525,10 +356,13 @@
 
     async function ensureMic() {
       if (localStream) return localStream;
+      if (!UI.micAvailable()) {
+        throw Object.assign(new Error("insecure"), { name: "SecurityError" });
+      }
       localStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
       });
-      setStatus(dotMic, micState, "Mic: active", "ok");
+      UI.setPill(pillMic, "active", "ok");
       return localStream;
     }
 
@@ -546,13 +380,13 @@
       }
       if (data.response) {
         const t = data.timings_ms || {};
-        const details = `${data.agent_name || agentTypeSelect.value}${t.turn_total_ms ? ` | total ${t.turn_total_ms} ms` : ""}`;
+        const details = `${data.agent_name || agentTypeSelect.value}${t.turn_total_ms ? ` · total ${t.turn_total_ms} ms` : ""}`;
         appendLine("bot", data.response, details);
       }
       if (data.audio_b64) {
         enqueueAudioChunk(data.audio_b64, data.audio_mime || "audio/wav");
       }
-      setStatus(dotTurn, turnState, "Turn: complete", "ok");
+      UI.setPill(pillTurn, "complete", "ok");
     }
 
     async function sendTurnStream(blob, mimeType) {
@@ -576,7 +410,7 @@
       let finalLanguage = languageSelect.value;
       let finalAgentName = agentTypeSelect.options[agentTypeSelect.selectedIndex]?.text || agentTypeSelect.value;
 
-      setStatus(dotTurn, turnState, "Turn: transcribing", "warn");
+      UI.setPill(pillTurn, "transcribing", "busy");
 
       while (true) {
         const { value, done } = await reader.read();
@@ -618,18 +452,16 @@
             appendLine("user", payload.text || "", finalLanguage);
           } else if (eventName === "llm_chunk") {
             chunkCounter += 1;
-            setStatus(dotTurn, turnState, `Turn: responding (chunk ${chunkCounter})`, "warn");
+            UI.setPill(pillTurn, `responding (${chunkCounter})`, "busy");
           } else if (eventName === "audio_chunk") {
             enqueueAudioChunk(payload.audio_b64 || "", payload.audio_mime || "audio/wav");
-          } else if (eventName === "error") {
-            console.warn("stream error", payload);
           } else if (eventName === "done") {
             doneSeen = true;
             finalResponse = payload.response || finalResponse;
             const t = payload.timings_ms || {};
-            const details = `${finalAgentName}${t.tts_first_chunk_ms ? ` | first audio ${t.tts_first_chunk_ms} ms` : ""}${t.turn_total_ms ? ` | total ${t.turn_total_ms} ms` : ""}`;
+            const details = `${finalAgentName}${t.tts_first_chunk_ms ? ` · first audio ${t.tts_first_chunk_ms} ms` : ""}${t.turn_total_ms ? ` · total ${t.turn_total_ms} ms` : ""}`;
             appendLine("bot", finalResponse || "(empty)", details);
-            setStatus(dotTurn, turnState, "Turn: complete", "ok");
+            UI.setPill(pillTurn, "complete", "ok");
           }
         }
       }
@@ -641,12 +473,16 @@
 
     async function sendTurn(blob, mimeType) {
       if (!blob || blob.size < 1200) {
-        setStatus(dotTurn, turnState, "Turn: too short", "warn");
+        UI.setPill(pillTurn, "too short", "warn");
+        UI.toast("That was too short to transcribe. Hold the button while you speak.", "warning");
+        resetHoldButton();
         return;
       }
       turnInFlight = true;
       holdButton.disabled = true;
-      setStatus(dotTurn, turnState, "Turn: transcribing", "warn");
+      holdButton.setAttribute("aria-busy", "true");
+      setHoldLabel("Thinking…");
+      UI.setPill(pillTurn, "transcribing", "busy");
       resetAudioQueue();
 
       try {
@@ -654,26 +490,33 @@
           try {
             await sendTurnStream(blob, mimeType);
           } catch (streamErr) {
-            console.warn("voice-turn-stream failed, falling back to /voice-turn", streamErr);
             await sendTurnLegacy(blob, mimeType);
           }
         } else {
           await sendTurnLegacy(blob, mimeType);
         }
+        clearError();
       } catch (err) {
-        setStatus(dotTurn, turnState, "Turn: error", "bad");
-        alert(`Voice turn failed: ${err.message}`);
+        UI.setPill(pillTurn, "error", "bad");
+        showError(`The voice turn failed: ${UI.sentence(err.message)} Check the server status and try again.`);
       } finally {
         turnInFlight = false;
-        holdButton.disabled = false;
-        holdButton.textContent = "Hold To Talk";
-        holdButton.classList.remove("active");
+        resetHoldButton();
       }
     }
 
+    function resetHoldButton() {
+      holdButton.disabled = false;
+      holdButton.removeAttribute("aria-busy");
+      holdButton.setAttribute("aria-pressed", "false");
+      setHoldLabel("Hold to talk");
+      holdButton.classList.remove("active");
+    }
+
     async function startHold(evt) {
-      evt.preventDefault();
+      if (evt) evt.preventDefault();
       if (turnInFlight || isRecording) return;
+      isRecording = true;
 
       try {
         const stream = await ensureMic();
@@ -692,31 +535,32 @@
           await sendTurn(blob, recorderMime);
         };
         mediaRecorder.start(120);
-        isRecording = true;
-        holdButton.textContent = "Release To Send";
+        if (!isRecording) {
+          // Released while the microphone prompt was open.
+          mediaRecorder.stop();
+          return;
+        }
+        setHoldLabel("Release to send");
         holdButton.classList.add("active");
-        setStatus(dotTurn, turnState, "Turn: recording", "warn");
+        holdButton.setAttribute("aria-pressed", "true");
+        UI.setPill(pillTurn, "recording", "busy");
       } catch (err) {
-        setStatus(dotMic, micState, "Mic: blocked", "bad");
-        alert(`Microphone unavailable: ${err.message}`);
+        isRecording = false;
+        UI.setPill(pillMic, "blocked", "bad");
+        showError(UI.describeMicError(err));
       }
     }
 
     function stopHold(evt) {
       if (evt) evt.preventDefault();
-      if (!isRecording || !mediaRecorder) return;
+      if (!isRecording) return;
       isRecording = false;
-      holdButton.textContent = "Uploading...";
+      if (!mediaRecorder) return;
+      setHoldLabel("Uploading…");
       if (mediaRecorder.state === "recording") {
         mediaRecorder.stop();
       }
     }
-
-    backendInput.addEventListener("change", async () => {
-      backendInput.value = getBackendUrl();
-      localStorage.setItem("pushTalkBackendUrl", backendInput.value);
-      await Promise.all([checkServer(), loadAgentTypes()]);
-    });
 
     playReplyButton.addEventListener("click", async () => {
       hidePlayCta();
@@ -731,12 +575,28 @@
       }
     });
 
+    btnClear.addEventListener("click", () => {
+      chatLog.innerHTML = EMPTY_HTML;
+      sessionId = "";
+      UI.toast("Conversation cleared. The next turn starts a new session.", "info", 3000);
+    });
+
+    agentTypeSelect.addEventListener("change", showAgentDescription);
+
     holdButton.addEventListener("pointerdown", startHold);
     holdButton.addEventListener("pointerup", stopHold);
     holdButton.addEventListener("pointerleave", stopHold);
     holdButton.addEventListener("pointercancel", stopHold);
     holdButton.addEventListener("touchend", stopHold, { passive: false });
     holdButton.addEventListener("contextmenu", (e) => e.preventDefault());
+    holdButton.addEventListener("keydown", (e) => {
+      if ((e.key === " " || e.key === "Enter") && !e.repeat) startHold(e);
+      else if (e.key === " " || e.key === "Enter") e.preventDefault();
+    });
+    holdButton.addEventListener("keyup", (e) => {
+      if (e.key === " " || e.key === "Enter") stopHold(e);
+    });
+    holdButton.addEventListener("blur", () => stopHold());
 
     window.addEventListener("beforeunload", () => {
       resetAudioQueue();
@@ -745,10 +605,10 @@
       }
     });
 
-    backendInput.value = getBackendUrl();
+    micWarning.hidden = UI.micAvailable();
     checkServer();
     loadAgentTypes();
-    setInterval(checkServer, 30000);
+    setInterval(() => { if (!document.hidden) checkServer(); }, 30000);
   </script>
 </body>
 </html>

@@ -1,126 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Record a short clip and test MMS-LID spoken-language identification." />
-    <title>MMS-LID Tester</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin: 10px 0;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #status {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        #result {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background: #f9f9f9;
-            white-space: pre-wrap;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Voice AI Model" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/ui.css" />
+  <script>try{var t=localStorage.getItem("voiceai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script src="/static/ui.js"></script>
+  <title>Language ID tester · Voice AI Model</title>
+  <meta name="description" content="Record a short clip and test MMS-LID spoken-language identification in isolation." />
+  <meta property="og:title" content="Language ID tester · Voice AI Model" />
+  <meta property="og:description" content="Record a short clip and test MMS-LID spoken-language identification in isolation." />
 </head>
-
 <body>
-    <h1>🇮🇳 MMS-LID Tester</h1>
-    <p>Record audio to test language detection in isolation.</p>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M14 28v8M23 20v24M32 12v40M41 22v20M50 27v10"/></g></svg>
+        <span>Voice AI Model</span>
+      </a>
+      <nav class="app-nav" aria-label="Main">
+        <ul>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/call">Call</a></li>
+          <li><a href="/push-to-talk">Push to talk</a></li>
+          <li><a href="/client">Live client</a></li>
+          <li><a href="/lid-test">Language ID</a></li>
+          <li><a href="/admin">Admin</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-ghost btn-icon theme-toggle" type="button" data-theme-toggle aria-label="Toggle colour theme"></button>
+    </div>
+  </header>
 
-    <button id="btnRecord">🔴 Record</button>
-    <button id="btnStop" disabled>⏹ Stop</button>
-
-    <div style="margin: 20px 0;">
-        <audio id="audioPreview" controls></audio>
+  <main id="main" class="container narrow">
+    <div class="page-head">
+      <span class="eyebrow">Diagnostics</span>
+      <h1>Language ID tester</h1>
+      <p class="lead">Record a few seconds of speech and see what <code>facebook/mms-lid-256</code> thinks you are speaking.</p>
     </div>
 
-    <button id="btnDetect" disabled>🔍 Detect Language</button>
+    <div class="stack">
+      <section class="card stack" aria-labelledby="record-title">
+        <h2 id="record-title">1. Record a clip</h2>
 
-    <div id="status" role="status" aria-live="polite">Ready</div>
-    <div id="result" aria-live="polite"></div>
+        <div class="alert alert-warning" id="micWarning" hidden>
+          <div>
+            <p class="alert-title">Microphone needs a secure page</p>
+            <p>Open this page over HTTPS or on <code>localhost</code>.</p>
+          </div>
+        </div>
 
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let audioBlob = null;
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnRecord" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg>
+            Record
+          </button>
+          <button class="btn" id="btnStop" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+            Stop
+          </button>
+          <span class="pill" id="recPill" aria-live="polite"><span class="dot" aria-hidden="true"></span><strong data-value>Ready</strong></span>
+        </div>
+        <p class="hint">Three to ten seconds of continuous speech gives the most reliable result.</p>
+        <audio id="audioPreview" controls aria-label="Recorded clip preview" hidden></audio>
+      </section>
 
-        const btnRecord = document.getElementById('btnRecord');
-        const btnStop = document.getElementById('btnStop');
-        const btnDetect = document.getElementById('btnDetect');
-        const audioPreview = document.getElementById('audioPreview');
-        const status = document.getElementById('status');
-        const resultDiv = document.getElementById('result');
+      <section class="card stack" aria-labelledby="detect-title">
+        <div class="card-head" style="margin-bottom: 0">
+          <h2 id="detect-title">2. Detect the language</h2>
+          <button class="btn btn-primary" id="btnDetect" type="button" disabled>Detect language</button>
+        </div>
+        <div id="status" class="visually-hidden" role="status" aria-live="polite"></div>
+        <div id="result" aria-live="polite">
+          <div class="empty-state">
+            <strong>No result yet</strong>
+            <span>Record a clip, then press <em>Detect language</em>.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
 
-        btnRecord.onclick = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlob = null;
+    let previewUrl = "";
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+    const btnRecord = document.getElementById("btnRecord");
+    const btnStop = document.getElementById("btnStop");
+    const btnDetect = document.getElementById("btnDetect");
+    const audioPreview = document.getElementById("audioPreview");
+    const status = document.getElementById("status");
+    const recPill = document.getElementById("recPill");
+    const resultDiv = document.getElementById("result");
+    const micWarning = document.getElementById("micWarning");
 
-            mediaRecorder.onstop = () => {
-                // Browsers record as WebM or MP4 by default, NOT WAV!
-                // Using generic type allows browser to infer correctly
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                audioPreview.src = audioUrl;
-                btnDetect.disabled = false;
-                status.innerText = "Recording finished. Click 'Detect Language'.";
-            };
+    function renderMessage(kind, title, text) {
+      resultDiv.innerHTML = "";
+      const box = document.createElement("div");
+      box.className = kind === "empty" ? "empty-state" : `alert alert-${kind}`;
+      if (kind === "error") box.setAttribute("role", "alert");
+      const inner = document.createElement("div");
+      const t = document.createElement(kind === "empty" ? "strong" : "p");
+      if (kind !== "empty") t.className = "alert-title";
+      t.textContent = title;
+      const p = document.createElement(kind === "empty" ? "span" : "p");
+      p.textContent = text;
+      inner.append(t, p);
+      if (kind === "empty") box.append(t, p);
+      else box.append(inner);
+      resultDiv.appendChild(box);
+    }
 
-            mediaRecorder.start();
-            status.innerText = "Recording... Speak now!";
-            btnRecord.disabled = true;
-            btnStop.disabled = false;
-            btnDetect.disabled = true;
-            resultDiv.innerText = "";
-        };
+    function renderBars(title, items) {
+      const wrap = document.createElement("div");
+      wrap.className = "stack-sm";
+      const h = document.createElement("h3");
+      h.textContent = title;
+      wrap.appendChild(h);
+      if (!items || !items.length) {
+        const p = document.createElement("p");
+        p.className = "muted small";
+        p.textContent = "No candidates.";
+        wrap.appendChild(p);
+        return wrap;
+      }
+      const list = document.createElement("ul");
+      list.className = "bars";
+      for (const item of items) {
+        const pct = Math.max(0, Math.min(100, (item.prob || 0) * 100));
+        const li = document.createElement("li");
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        const name = document.createElement("span");
+        name.textContent = item.name ? `${item.name} (${item.code})` : item.code;
+        const value = document.createElement("strong");
+        value.textContent = `${pct.toFixed(1)}%`;
+        label.append(name, value);
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        track.setAttribute("aria-hidden", "true");
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = "0%";
+        track.appendChild(fill);
+        li.append(label, track);
+        list.appendChild(li);
+        requestAnimationFrame(() => (fill.style.width = `${pct}%`));
+      }
+      wrap.appendChild(list);
+      return wrap;
+    }
 
-        btnStop.onclick = () => {
-            mediaRecorder.stop();
-            btnRecord.disabled = false;
-            btnStop.disabled = true;
-        };
+    function renderResult(data) {
+      resultDiv.innerHTML = "";
+      const grid = document.createElement("div");
+      grid.className = "grid grid-2";
+      grid.append(renderBars("Top Indian languages", data.top_indian), renderBars("Top overall", data.top_global));
+      const meta = document.createElement("p");
+      meta.className = "meta";
+      meta.style.marginTop = "var(--space-4)";
+      meta.textContent = `Clip length ${Number(data.duration || 0).toFixed(1)} s · mean energy ${Number(data.energy || 0).toFixed(4)}`;
+      const raw = document.createElement("details");
+      raw.style.marginTop = "var(--space-2)";
+      const summary = document.createElement("summary");
+      summary.textContent = "Raw JSON";
+      const pre = document.createElement("pre");
+      pre.className = "code";
+      pre.textContent = JSON.stringify(data, null, 2);
+      raw.append(summary, pre);
+      resultDiv.append(grid, meta, raw);
+    }
 
-        btnDetect.onclick = async () => {
-            if (!audioBlob) return;
+    function setRecState(text, state) {
+      UI.setPill(recPill, text, state);
+      status.textContent = text;
+    }
 
-            status.innerText = "Uploading & Detecting...";
-            resultDiv.innerText = "Waiting for server...";
+    btnRecord.onclick = async () => {
+      let stream;
+      try {
+        if (!UI.micAvailable()) throw Object.assign(new Error("insecure"), { name: "SecurityError" });
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        setRecState("Microphone blocked", "bad");
+        renderMessage("error", "Microphone unavailable", UI.describeMicError(err));
+        return;
+      }
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
 
-            const formData = new FormData();
-            formData.append("audio", audioBlob, "test_audio.wav");
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
 
-            try {
-                const response = await fetch("/detect-lang", {
-                    method: "POST",
-                    body: formData
-                });
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        // Browsers record WebM/MP4 rather than WAV; the server decodes either.
+        audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(audioBlob);
+        audioPreview.src = previewUrl;
+        audioPreview.hidden = false;
+        btnDetect.disabled = false;
+        setRecState("Clip recorded", "ok");
+        btnDetect.focus();
+      };
 
-                const data = await response.json();
-                status.innerText = "Done!";
-                resultDiv.innerText = JSON.stringify(data, null, 2);
-            } catch (err) {
-                status.innerText = "Error!";
-                resultDiv.innerText = "Upload Failed: " + err;
-            }
-        };
-    </script>
+      mediaRecorder.start();
+      setRecState("Recording… speak now", "busy");
+      btnRecord.disabled = true;
+      btnStop.disabled = false;
+      btnDetect.disabled = true;
+      btnStop.focus();
+    };
+
+    btnStop.onclick = () => {
+      mediaRecorder.stop();
+      btnRecord.disabled = false;
+      btnStop.disabled = true;
+    };
+
+    btnDetect.onclick = async () => {
+      if (!audioBlob) return;
+
+      btnDetect.disabled = true;
+      btnDetect.setAttribute("aria-busy", "true");
+      btnDetect.innerHTML = '<span class="spinner" aria-hidden="true"></span> Detecting…';
+      status.textContent = "Uploading and detecting";
+      resultDiv.innerHTML = '<div class="stack-sm" aria-hidden="true"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="width:80%"></span><span class="skeleton" style="width:40%"></span></div>';
+
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "test_audio.webm");
+
+      try {
+        const response = await fetch("/detect-lang", { method: "POST", body: formData });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const hint = response.status === 503
+            ? "The language ID model is still loading. Wait a minute and try again."
+            : data.error || `The server returned HTTP ${response.status}.`;
+          renderMessage("error", "Detection failed", hint);
+          status.textContent = "Detection failed";
+        } else {
+          renderResult(data);
+          status.textContent = "Detection complete";
+        }
+      } catch (err) {
+        renderMessage("error", "Upload failed", "Could not reach the server. Check your connection and try again.");
+        status.textContent = "Upload failed";
+      } finally {
+        btnDetect.disabled = false;
+        btnDetect.removeAttribute("aria-busy");
+        btnDetect.textContent = "Detect language";
+      }
+    };
+
+    micWarning.hidden = UI.micAvailable();
+  </script>
 </body>
-
 </html>

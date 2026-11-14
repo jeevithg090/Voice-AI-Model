@@ -243,7 +243,7 @@ threading.Thread(target=run_loop, daemon=True).start()
 # -----------------------
 # Flask App
 # -----------------------
-app = Flask(__name__)
+app = Flask(__name__, static_folder=os.path.join(STATIC_DIR, "static"), static_url_path="/static")
 sock = Sock(app)
 
 # Enable CORS for cross-origin requests (local frontend → remote GPU backend)
@@ -1960,6 +1960,11 @@ def admin_get_recording(recording_path: str):
 # Browser UIs
 # -----------------------
 @app.route("/")
+def home_page():
+    """Overview page: live server status and links to every UI."""
+    return send_from_directory(STATIC_DIR, "home.html")
+
+
 @app.route("/client")
 def client_page():
     return send_from_directory(STATIC_DIR, "client.html")
@@ -1995,7 +2000,16 @@ def list_agent_types():
 
 @app.route("/favicon.ico")
 def favicon():
-    return ("", 204)
+    return send_from_directory(os.path.join(STATIC_DIR, "static"), "favicon.svg", mimetype="image/svg+xml")
+
+
+@app.errorhandler(404)
+def _not_found(_err):
+    """Friendly HTML 404 for browsers, JSON for API clients."""
+    best = request.accept_mimetypes.best_match(["application/json", "text/html"])
+    if best == "text/html" and request.accept_mimetypes[best] > request.accept_mimetypes["application/json"]:
+        return send_from_directory(STATIC_DIR, "404.html"), 404
+    return jsonify({"error": "Not found"}), 404
 
 
 @app.route("/lid-test")
