@@ -310,7 +310,7 @@ def process_with_context(
             try:
                 if redis_available and session_id != "temp_session":
                     context_manager.add_turn(session_id, "assistant", full_response)
-                if result.get("embedding"):
+                if result.get("embedding") and full_response.strip():
                     cache.add_entry(prompt, result["embedding"], full_response)
             except Exception as e:
                 print(f"[ERROR] Failed to save post-stream context: {e}")

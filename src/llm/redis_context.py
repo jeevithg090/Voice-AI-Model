@@ -98,7 +98,6 @@ class RedisContextManager:
             # Fast-fail when Redis is unavailable so voice turns don't stall.
             socket_connect_timeout=0.25,
             socket_timeout=0.25,
-            retry_on_timeout=False,
         )
         self.session_ttl = ttl
         self.max_history = max_history
@@ -134,7 +133,7 @@ class RedisContextManager:
             "summarization_pending": False,
         }
 
-        self.client.setex(key, self.session_ttl, json.dumps(session_data))
+        self.client.set(key, json.dumps(session_data), ex=self.session_ttl)
         return session_id
 
     def get_session(self, session_id: str) -> Optional[Dict]:
@@ -167,7 +166,7 @@ class RedisContextManager:
                 session["summary"] = summary
                 session["summarization_pending"] = False
                 key = self._get_key(session_id)
-                self.client.setex(key, self.session_ttl, json.dumps(session))
+                self.client.set(key, json.dumps(session), ex=self.session_ttl)
                 print(f"[INFO] Async summarization complete for {session_id}: {summary[:50]}...")
         except Exception as e:
             print(f"[ERROR] Async summarization failed: {e}")
@@ -210,7 +209,7 @@ class RedisContextManager:
         # Update timestamps and save
         session["last_active"] = datetime.now().isoformat()
         key = self._get_key(session_id)
-        self.client.setex(key, self.session_ttl, json.dumps(session))
+        self.client.set(key, json.dumps(session), ex=self.session_ttl)
 
         return True
 
@@ -259,7 +258,7 @@ class RedisContextManager:
 
             # Save the pending flag
             key = self._get_key(session_id)
-            self.client.setex(key, self.session_ttl, json.dumps(session))
+            self.client.set(key, json.dumps(session), ex=self.session_ttl)
 
             # Submit to thread pool (non-blocking)
             _executor.submit(self._async_summarize, session_id, history_to_summarize)
@@ -324,7 +323,7 @@ class RedisContextManager:
             return False
         session["language"] = language
         key = self._get_key(session_id)
-        self.client.setex(key, self.session_ttl, json.dumps(session))
+        self.client.set(key, json.dumps(session), ex=self.session_ttl)
         return True
 
     def clear_session(self, session_id: str) -> bool:
