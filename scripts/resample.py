@@ -11,13 +11,7 @@ for fname in os.listdir(SRC_DIR):
         src_path = os.path.join(SRC_DIR, fname)
         dst_path = os.path.join(DST_DIR, fname.replace(".mp3", ".wav"))
 
-        cmd = [
-            "ffmpeg", "-loglevel", "quiet", "-y",
-            "-i", src_path,
-            "-ar", "16000",
-            "-ac", "1",
-            dst_path
-        ]
+        cmd = ["ffmpeg", "-loglevel", "quiet", "-y", "-i", src_path, "-ar", "16000", "-ac", "1", dst_path]
 
         subprocess.run(cmd)
 

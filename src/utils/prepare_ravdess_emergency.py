@@ -1,9 +1,10 @@
 import os
+
 import librosa
 import soundfile as sf
 from tqdm import tqdm
 
-SRC_DIR = "data/ravdess_raw"   # <-- FIXED PATH
+SRC_DIR = "data/ravdess_raw"  # <-- FIXED PATH
 DST_DIR = "data/processed/emergency"
 
 os.makedirs(DST_DIR, exist_ok=True)
@@ -23,9 +24,9 @@ for root, _, files in os.walk(SRC_DIR):
             if len(parts) != 7:
                 continue
 
-            modality = parts[0]   # should be 03 (audio-only)
-            channel = parts[1]    # 01 = speech
-            emotion = parts[2]    # 04,05,06 are distress-like
+            modality = parts[0]  # should be 03 (audio-only)
+            channel = parts[1]  # 01 = speech
+            emotion = parts[2]  # 04,05,06 are distress-like
 
             if modality == "03" and channel == "01" and emotion in VALID_EMOTIONS:
                 files_to_process.append(os.path.join(root, fname))
@@ -45,4 +46,3 @@ for path in tqdm(files_to_process):
     sf.write(os.path.join(DST_DIR, out_name), y, TARGET_SR)
 
 print("Emergency dataset prepared.")
-

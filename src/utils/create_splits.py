@@ -1,4 +1,6 @@
-import os, random, json
+import json
+import os
+import random
 
 random.seed(42)
 
@@ -10,12 +12,11 @@ for label in ["normal", "emergency"]:
     random.shuffle(files)
 
     n = len(files)
-    splits["train"] += files[:int(0.7*n)]
-    splits["val"]   += files[int(0.7*n):int(0.85*n)]
-    splits["test"]  += files[int(0.85*n):]
+    splits["train"] += files[: int(0.7 * n)]
+    splits["val"] += files[int(0.7 * n) : int(0.85 * n)]
+    splits["test"] += files[int(0.85 * n) :]
 
 with open("data/splits.json", "w") as f:
     json.dump(splits, f)
 
 print("Splits created.")
-

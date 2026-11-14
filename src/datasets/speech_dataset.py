@@ -1,7 +1,9 @@
 import os
+
 import torch
 import torchaudio
 from torch.utils.data import Dataset
+
 
 class SpeechDataset(Dataset):
     def __init__(self, root_dir, sample_rate=16000, clip_seconds=2):
@@ -29,10 +31,9 @@ class SpeechDataset(Dataset):
         waveform = waveform.mean(dim=0)
 
         if waveform.shape[0] > self.clip_len:
-            waveform = waveform[:self.clip_len]
+            waveform = waveform[: self.clip_len]
         else:
             pad = self.clip_len - waveform.shape[0]
             waveform = torch.nn.functional.pad(waveform, (0, pad))
 
         return waveform, torch.tensor(self.labels[idx], dtype=torch.float32)
-

@@ -1,8 +1,9 @@
 import torch
 from torch.utils.data import DataLoader
+
+from src.data.collate import mimi_collate  # ✅ ADD THIS
 from src.data.mimi_dataset import MimiEmergencyDataset
 from src.models.emergency_classifier import MimiEmergencyClassifier
-from src.data.collate import mimi_collate   # ✅ ADD THIS
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 
@@ -24,4 +25,4 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
         total += labels.size(0)
 
-print(f"Test Accuracy: {correct/total:.2%}")
+print(f"Test Accuracy: {correct / total:.2%}")

@@ -19,7 +19,6 @@ import argparse
 import asyncio
 import json
 import math
-import os
 import statistics
 import time
 from dataclasses import dataclass
@@ -36,19 +35,16 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     MimiModel,
+    Wav2Vec2ForSequenceClassification,
     WhisperForConditionalGeneration,
     WhisperProcessor,
-    Wav2Vec2ForSequenceClassification,
 )
 
 from src.config import settings
 from src.models.emergency_classifier import MimiEmergencyClassifier
 from src.tts.tts_manager import TTSManager
 
-
-SUPPORTED_LID_CODES = {
-    "eng", "hin", "tam", "tel", "kan", "ben", "guj", "mal", "mar", "pan", "ori", "asm", "urd"
-}
+SUPPORTED_LID_CODES = {"eng", "hin", "tam", "tel", "kan", "ben", "guj", "mal", "mar", "pan", "ori", "asm", "urd"}
 LANGUAGE_CODE_MAP = {
     "eng": "en",
     "hin": "hi",

@@ -17,13 +17,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import statistics
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import librosa
 import numpy as np
@@ -31,15 +30,14 @@ import torch
 from transformers import (
     AutoFeatureExtractor,
     MimiModel,
+    Wav2Vec2ForSequenceClassification,
     WhisperForConditionalGeneration,
     WhisperProcessor,
-    Wav2Vec2ForSequenceClassification,
 )
 
 from src.config import settings
 from src.models.emergency_classifier import MimiEmergencyClassifier
 from src.tts.tts_manager import TTSManager
-
 
 LANGUAGES = ["en", "hi", "te", "ta", "kn"]
 TTS_TEXT = {
@@ -287,7 +285,9 @@ class Runner:
                 print(f"[FAIL] tts_{lang}: {err}")
             else:
                 s = self.results["tts_by_language"][lang]["latency_ms"]
-                print(f"[OK] tts_{lang}: avg={s['avg_ms']:.2f} min={s['min_ms']:.2f} p95={s['p95_ms']:.2f} max={s['max_ms']:.2f}")
+                print(
+                    f"[OK] tts_{lang}: avg={s['avg_ms']:.2f} min={s['min_ms']:.2f} p95={s['p95_ms']:.2f} max={s['max_ms']:.2f}"
+                )
 
     def run(self):
         self.bench_speech_preprocess()
