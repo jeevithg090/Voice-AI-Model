@@ -4,27 +4,24 @@ Generates embeddings, performs semantic cache lookup, and manages conversation c
 Now with natural fillers and back-channeling support!
 """
 
-from .ollama_client import embed_text, chat
-from .semantic_cache import SemanticCache
-from .redis_context import RedisContextManager
-from .filler_manager import (
-    FillerBackchannelManager, 
-    get_enhanced_system_prompt,
-    FillerType
-)
 from src.config import settings
+
+from .filler_manager import FillerBackchannelManager
+from .ollama_client import chat, embed_text
+from .redis_context import RedisContextManager
+from .semantic_cache import SemanticCache
 
 # Language Code Map
 LANGUAGE_MAP = {
     "hi": "Hindi",
-    "kn": "Kannada", 
+    "kn": "Kannada",
     "ta": "Tamil",
     "te": "Telugu",
     "ml": "Malayalam",
     "bn": "Bengali",
     "gu": "Gujarati",
     "mr": "Marathi",
-    "en": "English"
+    "en": "English",
 }
 
 # Initialize the semantic cache, Redis context, and filler manager
@@ -118,36 +115,32 @@ If:
 def embedding_agent(prompt: str, similarity_threshold: float = 0.85):
     """
     Generates embedding for the prompt and performs semantic cache lookup.
-    
+
     Args:
         prompt: Input text from STT layer
         similarity_threshold: Minimum similarity score for cache hit (0.0-1.0)
-        
+
     Returns:
         dict with either cached response or embedding for LLM processing
     """
-    
+
     # 1. Generate embedding via local Ollama
     embedding = embed_text(prompt)
-    
+
     # 2. Perform semantic lookup from cache
     cached = cache.find_similar(embedding, prompt=prompt, threshold=similarity_threshold)
-    
+
     if cached:
         return {
             "cached": True,
             "cachedFrom": "semantic-cache",
             "response": cached["response"],
             "similarity": cached["similarity"],
-            "originalPrompt": cached["prompt"]
+            "originalPrompt": cached["prompt"],
         }
-    
+
     # 3. No semantic match - return embedding for LLM
-    return {
-        "cached": False,
-        "embedding": embedding,
-        "prompt": prompt
-    }
+    return {"cached": False, "embedding": embedding, "prompt": prompt}
 
 
 def process_with_context(
@@ -162,7 +155,7 @@ def process_with_context(
 ):
     """
     Full pipeline with Redis context: Embedding → Cache → Context → LLM → Store
-    
+
     Args:
         prompt: Input text from STT layer
         session_id: Redis session ID
@@ -172,19 +165,19 @@ def process_with_context(
         stream: If True, returns a generator for LLM response
         temperature: LLM sampling temperature
         max_tokens: Max tokens to generate
-        
+
     Returns:
         If stream=False: dict with full response
         If stream=True: dict with 'response_generator' and metadata
     """
-    from .ollama_client import generate_response, chat, chat_stream
-    
+    from .ollama_client import chat_stream
+
     is_custom_system_prompt = system_prompt is not None
 
     # Use default system prompt if not provided
     if system_prompt is None:
         system_prompt = DEFAULT_SYSTEM_PROMPT
-    
+
     # Inject metadata into default system prompt when caller didn't provide a custom prompt.
     if metadata and not is_custom_system_prompt:
         try:
@@ -193,18 +186,18 @@ def process_with_context(
                 "language_confidence": "N/A",
                 "emergency_probability": "0.0",
                 "sustained_distress": "False",
-                "processing_latency_ms": "0"
+                "processing_latency_ms": "0",
             }
             context_data = {**defaults, **metadata}
             system_prompt = system_prompt.format(**context_data)
         except Exception as e:
             print(f"[WARN] Failed to format system prompt with metadata: {e}")
             system_prompt += f"\n\n[CONTEXT METADATA]: {metadata}"
-            
+
         # --- DYNAMIC INJECTION: Force Language Instruction ---
         lang_code = metadata.get("detected_language", "en")
         lang_name = LANGUAGE_MAP.get(lang_code, "English")
-        
+
         if lang_code in ["hi", "kn", "ta", "te", "ml", "bn", "gu", "mr"]:
             print(f"ℹ️  Switching to Minimal System Prompt for {lang_name}")
             system_prompt = (
@@ -215,8 +208,8 @@ def process_with_context(
                 f"Do not translate to English.\n"
             )
             if metadata.get("sustained_distress") == "True":
-                 system_prompt += "\nUSER IS IN DISTRESS. HELP THEM."
-    
+                system_prompt += "\nUSER IS IN DISTRESS. HELP THEM."
+
     # Fast-fail context path when Redis is unavailable.
     redis_available = False
     if session_id == "temp_session":
@@ -238,7 +231,7 @@ def process_with_context(
                 session_id = "temp_session"
         else:
             session_id = "temp_session"
-            
+
     if session_id != "temp_session" and redis_available:
         try:
             session = context_manager.get_session(session_id)
@@ -249,14 +242,14 @@ def process_with_context(
             session_id = "temp_session"
     elif session_id != "temp_session" and not redis_available:
         session_id = "temp_session"
-    
+
     # Step 2: Check semantic cache
     try:
         result = embedding_agent(prompt, similarity_threshold)
     except Exception as e:
         print(f"[WARN] Embedding agent failed: {e}")
         result = {"cached": False, "embedding": [], "prompt": prompt}
-    
+
     if result["cached"]:
         if redis_available and session_id != "temp_session":
             try:
@@ -264,12 +257,13 @@ def process_with_context(
                 context_manager.add_turn(session_id, "assistant", result["response"])
             except Exception:
                 pass
-        
+
         # If streaming is requested but we have cache, we simulate a stream
         if stream:
+
             def cached_stream_gen():
                 yield result["response"]
-            
+
             return {
                 "response_generator": cached_stream_gen(),
                 "session_id": session_id,
@@ -277,7 +271,7 @@ def process_with_context(
                 "similarity": result["similarity"],
                 "new_session": is_new_session,
                 "cached": True,
-                "stream": True
+                "stream": True,
             }
 
         return {
@@ -285,9 +279,9 @@ def process_with_context(
             "session_id": session_id,
             "source": "semantic-cache",
             "similarity": result["similarity"],
-            "new_session": is_new_session
+            "new_session": is_new_session,
         }
-    
+
     # Step 3/4: Conversation context (Redis-backed) or stateless fallback.
     if redis_available and session_id != "temp_session":
         try:
@@ -300,18 +294,18 @@ def process_with_context(
             messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
     else:
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
-    
+
     # Step 5: Call LLM
     if stream:
         # Wrapper to handle side-effects (saving to cache/context) after stream ends
         def stream_wrapper():
             full_response = ""
             stream_gen = chat_stream(messages=messages, max_tokens=max_tokens, temperature=temperature)
-            
+
             for token in stream_gen:
                 full_response += token
                 yield token
-            
+
             # Post-stream processing: Save to Context & Cache
             try:
                 if redis_available and session_id != "temp_session":
@@ -320,11 +314,11 @@ def process_with_context(
                     cache.add_entry(prompt, result["embedding"], full_response)
             except Exception as e:
                 print(f"[ERROR] Failed to save post-stream context: {e}")
-                
+
         # Handle Filler (Same logic, simple check)
         filler_manager.reset_turn()
         filler_audio, used_filler = filler_manager.get_response_prefix(prompt, 1500, None)
-        
+
         return {
             "response_generator": stream_wrapper(),
             "session_id": session_id,
@@ -333,25 +327,25 @@ def process_with_context(
             "new_session": is_new_session,
             "filler_audio": filler_audio if used_filler else None,
             "language": filler_manager._session_language,
-            "stream": True
+            "stream": True,
         }
-        
+
     else:
         # Non-streaming fallback
         filler_manager.reset_turn()
         filler_audio, used_filler = filler_manager.get_response_prefix(prompt, 1500, None)
-        
+
         response = chat(messages=messages, max_tokens=max_tokens, temperature=temperature)
-        
+
         if redis_available and session_id != "temp_session":
             try:
                 context_manager.add_turn(session_id, "assistant", response)
             except Exception:
                 pass
-        
+
         if result.get("embedding"):
             cache.add_entry(prompt, result["embedding"], response)
-        
+
         return {
             "response": response,
             "session_id": session_id,
@@ -360,60 +354,46 @@ def process_with_context(
             "new_session": is_new_session,
             "context_turns": len(messages),
             "filler_audio": filler_audio if used_filler else None,
-            "language": filler_manager._session_language
+            "language": filler_manager._session_language,
         }
 
 
 def process_query(prompt: str, system_prompt: str = None, similarity_threshold: float = 0.85):
     """
     Single-turn pipeline (no context): Embedding → Cache → LLM → Store
-    
+
     Args:
         prompt: Input text from STT layer
         system_prompt: Optional system instructions
         similarity_threshold: Minimum similarity for cache hit
-        
+
     Returns:
         dict with response and metadata
     """
     from .ollama_client import generate_response
-    
+
     # Step 1: Check semantic cache
     result = embedding_agent(prompt, similarity_threshold)
-    
+
     if result["cached"]:
         return {
             "response": result["response"],
             "source": "semantic-cache",
             "similarity": result["similarity"],
-            "latency_saved": True
+            "latency_saved": True,
         }
-    
+
     # Step 2: No cache hit - call LLM
     if system_prompt is None:
         system_prompt = DEFAULT_SYSTEM_PROMPT
-    
-    response = generate_response(
-        prompt=prompt,
-        system_prompt=system_prompt,
-        max_tokens=256,
-        temperature=0.7
-    )
-    
+
+    response = generate_response(prompt=prompt, system_prompt=system_prompt, max_tokens=256, temperature=0.7)
+
     # Cache the response
     if result.get("embedding"):
-        cache.add_entry(
-            prompt=prompt,
-            embedding=result["embedding"],
-            response=response
-        )
-    
-    return {
-        "response": response,
-        "source": "llm",
-        "model": settings.LLM_MODEL,
-        "cached_for_future": True
-    }
+        cache.add_entry(prompt=prompt, embedding=result["embedding"], response=response)
+
+    return {"response": response, "source": "llm", "model": settings.LLM_MODEL, "cached_for_future": True}
 
 
 def end_session(session_id: str) -> bool:

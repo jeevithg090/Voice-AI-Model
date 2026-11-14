@@ -3,24 +3,21 @@ import os
 import shutil
 from typing import Optional
 
-import torch
-
 from src.config import settings
 from src.tts.edge_tts import EdgeTTSTTS
+
 
 class TTSManager:
     """
     Manages Text-to-Speech synthesis, routing requests to the appropriate engine
     based on language and latency requirements.
-    
+
     Engines:
     - Piper (Local): English, Hindi, Tamil, Telugu (preferred when models are available)
     - Edge TTS (Cloud): Kannada primary + fallback for any missing Piper voice
     """
-    
-    def __init__(self):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    def __init__(self):
         # Path to Piper binary (prefer env or PATH)
         self.piper_path = settings.PIPER_PATH or shutil.which("piper") or "piper"
 
@@ -31,7 +28,7 @@ class TTSManager:
             self.edge_tts = EdgeTTSTTS()
         except Exception as e:
             print(f"⚠️ Edge TTS init failed: {e}")
-        
+
     def get_engine(self, language_code: str) -> str:
         backend = settings.TTS_BACKEND.lower()
         if backend in {"piper", "edge"}:
@@ -83,7 +80,7 @@ class TTSManager:
         """
         # engine = self.get_engine(language_code) # DISABLED LOG to reduce spam
         # print(f"🔊 [TTS] Synthesizing with {engine.upper()}: '{text[:20]}...'")
-        
+
         engine = self.get_engine(language_code)
 
         if engine == "edge":
@@ -103,7 +100,7 @@ class TTSManager:
         if self.edge_tts:
             return await self._speak_edge(text, language_code)
         return None
-            
+
     async def _speak_piper(self, text: str, language_code: str) -> Optional[bytes]:
         """
         Generate audio using Piper TTS (Local).
@@ -117,20 +114,22 @@ class TTSManager:
             # Run Piper with WAV output to stdout
             proc = await asyncio.create_subprocess_exec(
                 self.piper_path,
-                "--model", model_path,
-                "--output_file", "-", # stdout
+                "--model",
+                model_path,
+                "--output_file",
+                "-",  # stdout
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await proc.communicate(input=text.encode())
-             
+
             if proc.returncode != 0:
-                 print(f"❌ Piper Error: {stderr.decode()}")
-                 return None
-                 
+                print(f"❌ Piper Error: {stderr.decode()}")
+                return None
+
             return stdout
-            
+
         except Exception as e:
             print(f"❌ Piper Exception: {e}")
             return None
