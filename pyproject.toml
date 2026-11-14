@@ -26,7 +26,6 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "src/realtime/signaling_server.py" = ["E402"]  # staged heavy imports after setup
 "scripts/**" = ["E402"]
-"scripts/integration/**" = ["E402"]
 "src/**/train*.py" = ["E402"]
 
 [tool.ruff.lint.isort]
