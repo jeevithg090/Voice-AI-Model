@@ -1,5 +1,19 @@
+"""Central runtime configuration, read from environment variables.
+
+Values are resolved once at import time. A local ``.env`` file is loaded
+automatically when ``python-dotenv`` is installed (it never overrides
+variables already present in the process environment).
+"""
+
 import os
 from dataclasses import dataclass
+
+try:  # Optional: load a local .env for development convenience.
+    from dotenv import load_dotenv
+
+    load_dotenv(override=False)
+except ImportError:  # pragma: no cover - dotenv is optional
+    pass
 
 
 def _env(name: str, default=None):
@@ -22,6 +36,14 @@ def _env_int(name: str, default: int) -> int:
         return int(value)
     except ValueError:
         return default
+
+
+def _env_list(name: str, default: str = "") -> tuple:
+    """Parse a comma-separated env var into a tuple of non-empty, stripped items."""
+    raw = os.getenv(name)
+    if raw is None:
+        raw = default
+    return tuple(item.strip() for item in raw.split(",") if item.strip())
 
 
 def _env_float(name: str, default: float) -> float:
@@ -86,8 +108,31 @@ class Settings:
     # Server Configuration
     SERVER_HOST: str = _env("SERVER_HOST", "0.0.0.0")
     SERVER_PORT: int = _env_int("SERVER_PORT", 8080)
+    # Comma-separated list of allowed CORS origins ("*" allows any origin).
+    CORS_ORIGINS: tuple = _env_list("CORS_ORIGINS", "*")
+    # Maximum accepted upload size for /voice-turn, /voice-turn-stream, /detect-lang.
+    MAX_UPLOAD_MB: int = _env_int("MAX_UPLOAD_MB", 20)
+
+    # Admin panel / API protection (HTTP Basic auth). Empty password = auth disabled.
+    ADMIN_USERNAME: str = _env("ADMIN_USERNAME", "admin")
+    ADMIN_PASSWORD: str = _env("ADMIN_PASSWORD", "")
+    ADMIN_DB_PATH: str = _env("ADMIN_DB_PATH", "data/admin/voice_agent.db")
+    CONVERSATION_MEDIA_DIR: str = _env("CONVERSATION_MEDIA_DIR", "data/conversation_media")
+
+    # WebRTC ICE configuration. TURN is optional but recommended behind NAT.
+    STUN_URLS: tuple = _env_list(
+        "STUN_URLS", "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"
+    )
+    TURN_URLS: tuple = _env_list("TURN_URLS", "")
+    TURN_USERNAME: str = _env("TURN_USERNAME", "")
+    TURN_CREDENTIAL: str = _env("TURN_CREDENTIAL", "")
+
+    # Semantic cache persistence file.
+    SEMANTIC_CACHE_PATH: str = _env("SEMANTIC_CACHE_PATH", "semantic_cache.json")
 
     # Emergency Detection
+    ENABLE_EMERGENCY_DETECTION: bool = _env_bool("ENABLE_EMERGENCY_DETECTION", True)
+    MIMI_MODEL: str = _env("MIMI_MODEL", "kyutai/mimi")
     EMERGENCY_CLASSIFIER_PATH: str = _env(
         "EMERGENCY_CLASSIFIER_PATH", "models/emergency_classifier.pt"
     )

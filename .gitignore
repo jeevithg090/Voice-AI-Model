@@ -1,37 +1,55 @@
-# Datasets
-data/
-*.zip
+# --- Secrets / local config ---
+.env
+.env.*
+!.env.example
 
-# Audio files
-*.wav
-*.mp3
-
-# Python cache
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
 
-# Virtual environment
+# --- Virtual environments ---
 venv/
 .venv/
+env/
 
-# Model weights
-models/
+# --- Editors / OS junk ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Datasets & runtime data (root-level only; src/models and src/data are code) ---
+/data/
+*.zip
+
+# --- Model weights (root-level checkpoint dir) ---
+/models/
 *.pt
 *.pth
 *.h5
 
-# macOS junk
-.DS_Store
+# --- Audio artifacts ---
+*.wav
+*.mp3
 
-# TTS Assets (Large files)
+# --- TTS assets (downloaded by src/tts/setup_piper.sh) ---
 src/tts/piper_bin/
 src/tts/piper_models/
 src/tts/piper.tar.gz
 
-# Test Outputs
+# --- Runtime outputs ---
 test_output/
 tts_output/
 debug_tts_*.wav
-
-# Local Cache
+lid_debug/
 semantic_cache.json
+*.log
+!gpu_wav_samples/test_logs/*.log
