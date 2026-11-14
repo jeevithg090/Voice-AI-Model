@@ -190,8 +190,9 @@ def generate_response_stream(
                     except json.JSONDecodeError:
                         pass
     except requests.exceptions.RequestException as e:
+        # Yield nothing: callers treat an empty reply as "uncertain" and hand
+        # over to a human instead of speaking (or caching) an error string.
         print(f"[ERROR] LLM Stream failed: {e}")
-        yield f"Error: {str(e)}"
 
 
 def chat_stream(
@@ -224,5 +225,6 @@ def chat_stream(
                     except json.JSONDecodeError:
                         pass
     except requests.exceptions.RequestException as e:
+        # Yield nothing: callers treat an empty reply as "uncertain" and hand
+        # over to a human instead of speaking (or caching) an error string.
         print(f"[ERROR] Chat Stream failed: {e}")
-        yield f"Error: {str(e)}"
