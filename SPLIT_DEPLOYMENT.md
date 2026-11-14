@@ -33,7 +33,7 @@ This guide explains how to deploy the Voice AI system in a **split architecture*
 Run the bootstrap script to mount scratch disk and install Docker:
 ```bash
 git clone <your-repo-url>
-cd solvathon_layer1-main\ 3
+cd Voice-AI-Model
 sudo bash deploy/do_gpu_bootstrap.sh
 ```
 
@@ -153,7 +153,7 @@ In the call interface:
 From your local machine:
 
 ```bash
-python test_pipeline.py --server http://<DROPLET_IP>:8080
+python scripts/integration/check_pipeline.py --server http://<DROPLET_IP>:8080
 ```
 
 All tests should pass:
@@ -191,15 +191,14 @@ Allow inbound traffic on:
 
 ### 4.2 TURN Server (NAT Traversal)
 
-The system uses free TURN servers (`openrelay.metered.ca`) for NAT traversal. If WebRTC fails:
+By default only public STUN servers are configured. If WebRTC fails behind NAT:
 
-1. Switch to **WebSocket mode** in the call interface
-2. Or configure your own TURN server in `signaling_server.py`:
-   ```python
-   ICE_SERVERS = [
-       RTCIceServer(urls="stun:stun.l.google.com:19302"),
-       RTCIceServer(urls="turn:your-turn-server.com:3478", username="your-username", credential="your-password"),
-   ]
+1. Switch to **WebSocket mode** in the call interface, or
+2. Configure a TURN relay in `.env` (no code changes needed):
+   ```bash
+   TURN_URLS=turn:your-turn-server.com:3478
+   TURN_USERNAME=your-username
+   TURN_CREDENTIAL=your-password
    ```
 
 ### 4.3 SSH Tunnel (Alternative Access)
@@ -332,12 +331,12 @@ docker compose restart app
 **On GPU Droplet:**
 ```bash
 git clone <repo>
-cd solvathon_layer1-main\ 3
+cd Voice-AI-Model
 sudo bash deploy/do_gpu_bootstrap.sh
 cp .env.example .env
 docker compose up -d
 docker exec -it solvathon_ollama ollama pull llama3.2:3b
-python test_pipeline.py --server http://localhost:8080
+python scripts/integration/check_pipeline.py --server http://localhost:8080
 ```
 
 **On Local PC:**
