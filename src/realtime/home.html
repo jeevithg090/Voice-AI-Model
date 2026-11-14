@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Voice AI Model" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/ui.css" />
+  <script>try{var t=localStorage.getItem("voiceai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script src="/static/ui.js"></script>
+  <title>Overview · Voice AI Model</title>
+  <meta name="description" content="Self-hosted speech-to-speech voice agent for Indian languages: live server status and entry points to the call, push-to-talk, language ID and admin tools." />
+  <meta property="og:title" content="Voice AI Model: low-cost voice agent for Indic languages" />
+  <meta property="og:description" content="Self-hosted speech-to-speech voice agent for Hindi, Tamil, Telugu, Kannada and English with acoustic distress detection." />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M14 28v8M23 20v24M32 12v40M41 22v20M50 27v10"/></g></svg>
+        <span>Voice AI Model</span>
+      </a>
+      <nav class="app-nav" aria-label="Main">
+        <ul>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/call">Call</a></li>
+          <li><a href="/push-to-talk">Push to talk</a></li>
+          <li><a href="/client">Live client</a></li>
+          <li><a href="/lid-test">Language ID</a></li>
+          <li><a href="/admin">Admin</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-ghost btn-icon theme-toggle" type="button" data-theme-toggle aria-label="Toggle colour theme"></button>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section class="page-head" aria-labelledby="page-title">
+      <span class="eyebrow">Indic speech-to-speech agent</span>
+      <h1 id="page-title">Talk to the voice agent in your language</h1>
+      <p class="lead">
+        Speak Hindi, Tamil, Telugu, Kannada or English. The server detects the language, transcribes it with Whisper,
+        answers with a local LLM and replies in a synthesized voice, while a separate model listens for acoustic distress.
+      </p>
+    </section>
+
+    <div class="grid grid-main">
+      <section class="stack" aria-labelledby="tools-title">
+        <h2 id="tools-title" class="visually-hidden">Tools</h2>
+        <div class="grid grid-2">
+          <a class="card card-link" href="/call">
+            <span class="badge">Recommended</span>
+            <h3>Voice call</h3>
+            <p class="muted small">Full call interface: WebRTC, WebSocket or upload-per-turn, with a live waveform and transcript.</p>
+            <span class="card-cta">Open call &rarr;</span>
+          </a>
+          <a class="card card-link" href="/push-to-talk">
+            <span class="badge neutral">Most reliable</span>
+            <h3>Push to talk</h3>
+            <p class="muted small">Hold a button, speak, release. Works on any network. Pick a purpose agent such as a hospital kiosk.</p>
+            <span class="card-cta">Open push to talk &rarr;</span>
+          </a>
+          <a class="card card-link" href="/client">
+            <span class="badge neutral">Debug</span>
+            <h3>Live client</h3>
+            <p class="muted small">Lightweight streaming client with a mic level meter and a timestamped event log.</p>
+            <span class="card-cta">Open live client &rarr;</span>
+          </a>
+          <a class="card card-link" href="/lid-test">
+            <span class="badge neutral">Diagnostics</span>
+            <h3>Language ID tester</h3>
+            <p class="muted small">Record a short clip and see the MMS-LID language probabilities on their own.</p>
+            <span class="card-cta">Open tester &rarr;</span>
+          </a>
+          <a class="card card-link span-all" href="/admin">
+            <span class="badge neutral">Operators</span>
+            <h3>Admin console</h3>
+            <p class="muted small">Edit prompt templates, create and activate agents, and review conversation transcripts and recordings.</p>
+            <span class="card-cta">Open admin &rarr;</span>
+          </a>
+        </div>
+
+        <div class="alert alert-warning" role="note">
+          <div>
+            <p class="alert-title">Not an emergency service</p>
+            <p>This system gives conversational help and decision support only. In an emergency, contact official emergency services.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="status-title" aria-busy="true" id="statusCard">
+        <div class="card-head">
+          <div>
+            <h2 id="status-title">Server status</h2>
+            <p id="statusUpdated">Checking&hellip;</p>
+          </div>
+          <button class="btn btn-sm" type="button" id="btnRefresh">Refresh</button>
+        </div>
+
+        <div id="statusError" class="alert alert-error" role="alert" hidden>
+          <div>
+            <p class="alert-title">Server unreachable</p>
+            <p>Could not reach <code>/healthz</code>. Check that the server is running, then refresh.</p>
+          </div>
+        </div>
+
+        <dl class="kv" id="statusList">
+          <div><dt>Speech models</dt><dd data-key="models"><span class="skeleton" style="width:90px"></span></dd></div>
+          <div><dt>Whisper ASR</dt><dd data-key="whisper"><span class="skeleton" style="width:60px"></span></dd></div>
+          <div><dt>Language ID</dt><dd data-key="lid"><span class="skeleton" style="width:60px"></span></dd></div>
+          <div><dt>Distress detection</dt><dd data-key="distress"><span class="skeleton" style="width:70px"></span></dd></div>
+          <div><dt>Ollama LLM</dt><dd data-key="ollama"><span class="skeleton" style="width:70px"></span></dd></div>
+          <div><dt>Redis context</dt><dd data-key="redis"><span class="skeleton" style="width:60px"></span></dd></div>
+          <div><dt>TTS backend</dt><dd data-key="tts"><span class="skeleton" style="width:50px"></span></dd></div>
+          <div><dt>Compute device</dt><dd data-key="device"><span class="skeleton" style="width:50px"></span></dd></div>
+          <div><dt>Active agent</dt><dd data-key="agent"><span class="skeleton" style="width:100px"></span></dd></div>
+          <div><dt>Active calls</dt><dd data-key="calls"><span class="skeleton" style="width:20px"></span></dd></div>
+        </dl>
+        <p class="hint" style="margin-top: var(--space-3)">
+          Models load in the background after start-up; calls are accepted once Whisper and language ID are ready.
+          The server keeps running without Redis, Ollama or the distress model.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    Voice AI Model &middot; open models: MMS-LID, Whisper, Ollama, Piper / Edge TTS, Mimi &middot;
+    <a href="/healthz">/healthz</a> &middot; <a href="/ready">/ready</a> &middot; <a href="/metrics">/metrics</a>
+  </footer>
+
+  <script>
+    const statusCard = document.getElementById("statusCard");
+    const statusError = document.getElementById("statusError");
+    const statusUpdated = document.getElementById("statusUpdated");
+    const btnRefresh = document.getElementById("btnRefresh");
+
+    function cell(key) {
+      return document.querySelector(`[data-key="${key}"]`);
+    }
+
+    function setCell(key, text, state) {
+      const el = cell(key);
+      el.innerHTML = "";
+      if (state) {
+        const dot = document.createElement("span");
+        dot.className = `dot ${state}`;
+        dot.setAttribute("aria-hidden", "true");
+        el.appendChild(dot);
+      }
+      el.appendChild(document.createTextNode(text));
+    }
+
+    function describeDistress(info) {
+      if (info === "ready") return ["Enabled", "ok"];
+      return ["Disabled", "warn"];
+    }
+
+    async function loadStatus() {
+      statusCard.setAttribute("aria-busy", "true");
+      btnRefresh.disabled = true;
+      statusUpdated.textContent = "Checking…";
+      try {
+        const [healthRes, readyRes] = await Promise.all([fetch("/healthz"), fetch("/ready")]);
+        if (!healthRes.ok) throw new Error(`HTTP ${healthRes.status}`);
+        const health = await healthRes.json();
+        const ready = await readyRes.json().catch(() => ({}));
+
+        statusError.hidden = true;
+        setCell("models", ready.ready ? "Ready" : "Loading", ready.ready ? "ok" : "busy");
+        setCell("whisper", health.whisper_ready ? "Loaded" : "Not loaded", health.whisper_ready ? "ok" : "warn");
+        setCell("lid", health.lid_ready ? "Loaded" : "Not loaded", health.lid_ready ? "ok" : "warn");
+        const [dText, dState] = describeDistress(health.emergency_detection);
+        setCell("distress", dText, dState);
+        if (health.emergency_detection && health.emergency_detection !== "ready") {
+          cell("distress").title = String(health.emergency_detection);
+        }
+        const ollamaUp = Boolean(health.ollama && health.ollama.server_running);
+        setCell("ollama", ollamaUp ? "Running" : "Unavailable", ollamaUp ? "ok" : "bad");
+        setCell("redis", health.redis ? "Connected" : "Unavailable", health.redis ? "ok" : "warn");
+        setCell("tts", health.tts_backend || "n/a");
+        setCell("device", health.device || "n/a");
+        setCell("agent", health.active_agent || "None");
+        setCell("calls", String(health.active_calls ?? 0));
+        statusUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        statusError.hidden = false;
+        document.querySelectorAll("#statusList dd").forEach((dd) => (dd.textContent = "—"));
+        statusUpdated.textContent = "Last check failed";
+      } finally {
+        statusCard.setAttribute("aria-busy", "false");
+        btnRefresh.disabled = false;
+      }
+    }
+
+    btnRefresh.addEventListener("click", loadStatus);
+    loadStatus();
+    setInterval(() => {
+      if (!document.hidden) loadStatus();
+    }, 30000);
+  </script>
+</body>
+</html>

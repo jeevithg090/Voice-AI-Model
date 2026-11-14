@@ -3,239 +3,96 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Admin console for voice agent templates, agents and conversation history." />
-  <title>Voice Agent Admin</title>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --surface: #ffffff;
-      --ink: #10203a;
-      --muted: #4e5d78;
-      --border: #d8e0ef;
-      --primary: #1b5fa7;
-      --success: #1f8f4f;
-      --warn: #b86f1f;
-      --danger: #b33a3a;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "SF Pro Text", "Helvetica Neue", sans-serif;
-      color: var(--ink);
-      background: linear-gradient(140deg, #eef3fb, #f8fbff);
-    }
-
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 20px;
-      display: grid;
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    }
-
-    .full { grid-column: 1 / -1; }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 8px 25px rgba(16, 32, 58, 0.05);
-    }
-
-    h1, h2, h3 {
-      margin: 0 0 10px;
-      line-height: 1.2;
-    }
-
-    h1 { font-size: 1.6rem; }
-    h2 { font-size: 1.2rem; }
-    h3 { font-size: 1rem; }
-
-    .muted { color: var(--muted); font-size: 0.92rem; }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.86rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    input, textarea, select, button {
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      padding: 9px 10px;
-      box-sizing: border-box;
-      font: inherit;
-    }
-
-    textarea { min-height: 84px; resize: vertical; }
-
-    button {
-      width: auto;
-      cursor: pointer;
-      color: #fff;
-      border: none;
-      background: var(--primary);
-    }
-
-    button.secondary { background: #465d80; }
-    button.warn { background: var(--warn); }
-    button.success { background: var(--success); }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .list {
-      display: grid;
-      gap: 8px;
-      max-height: 340px;
-      overflow: auto;
-      padding-right: 4px;
-    }
-
-    .item {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      background: #fbfdff;
-    }
-
-    .item .title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .item small {
-      color: var(--muted);
-      display: block;
-      margin-top: 4px;
-    }
-
-    .turn {
-      border-left: 4px solid #c6d7f1;
-      padding: 8px 10px;
-      background: #f9fcff;
-      margin-bottom: 8px;
-    }
-
-    .turn.user { border-left-color: #4b77b8; }
-    .turn.assistant { border-left-color: #2f9a55; }
-
-    .badge {
-      display: inline-block;
-      font-size: 0.72rem;
-      color: #fff;
-      background: #2f5d92;
-      border-radius: 6px;
-      padding: 2px 6px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    pre {
-      background: #0f213f;
-      color: #eff6ff;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 0.8rem;
-      overflow: auto;
-    }
-
-    #status {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      margin: 0;
-      padding: 10px 14px;
-      font-size: 0.9rem;
-      color: #fff;
-      background: #2f5d92;
-    }
-
-    @media (max-width: 760px) {
-      .grid2 { grid-template-columns: 1fr; }
-    }
-  </style>
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Voice AI Model" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/ui.css" />
+  <script>try{var t=localStorage.getItem("voiceai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script src="/static/ui.js"></script>
+  <title>Admin · Voice AI Model</title>
+  <meta name="description" content="Admin console for voice agent prompt templates, agents and conversation history with recordings." />
+  <meta property="og:title" content="Admin · Voice AI Model" />
+  <meta property="og:description" content="Admin console for voice agent prompt templates, agents and conversation history." />
 </head>
 <body>
-  <div id="status" role="status" aria-live="polite">Admin panel ready.</div>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M14 28v8M23 20v24M32 12v40M41 22v20M50 27v10"/></g></svg>
+        <span>Voice AI Model</span>
+      </a>
+      <nav class="app-nav" aria-label="Main">
+        <ul>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/call">Call</a></li>
+          <li><a href="/push-to-talk">Push to talk</a></li>
+          <li><a href="/client">Live client</a></li>
+          <li><a href="/lid-test">Language ID</a></li>
+          <li><a href="/admin">Admin</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-ghost btn-icon theme-toggle" type="button" data-theme-toggle aria-label="Toggle colour theme"></button>
+    </div>
+  </header>
 
-  <div class="container">
-    <section class="card full">
-      <h1>Voice Agent Admin Panel</h1>
-      <p class="muted">Customize agent behavior, activate templates, and inspect conversation transcript + recordings.</p>
-      <div id="activeAgent"></div>
-    </section>
+  <main id="main" class="container">
+    <div class="page-head">
+      <span class="eyebrow">Admin console</span>
+      <h1>Agents, templates and conversations</h1>
+      <p class="lead">Choose which agent answers calls, shape its prompt, and review what callers said.</p>
+    </div>
 
-    <section class="card">
-      <h2>Templates</h2>
-      <div class="toolbar">
-        <button class="secondary" onclick="loadTemplates()">Refresh Templates</button>
-      </div>
-      <div class="list" id="templateList"></div>
-      <hr />
-      <h3>Create Template</h3>
-      <label>Name</label>
-      <input id="tplName" placeholder="Example: Banking Support" />
-      <label>Description</label>
-      <input id="tplDesc" placeholder="Purpose of this template" />
-      <label>Defaults (JSON)</label>
-      <textarea id="tplDefaults">{
-  "assistant_name": "Asha",
-  "tone": "calm",
-  "objective": "Resolve in minimum turns",
-  "temperature": 0.6,
-  "max_tokens": 240,
-  "similarity_threshold": 0.85
-}</textarea>
-      <label>System Prompt Template (use placeholders like {{assistant_name}})</label>
-      <textarea id="tplPrompt">You are {{assistant_name}}, a multilingual voice assistant for {{domain}}.
-Tone: {{tone}}.
-Objective: {{objective}}.
-Always respond in {{detected_language}} and keep answers short for speech.
-If unsure, offer human handover.</textarea>
-      <div class="row">
-        <button onclick="createTemplate()">Save Template</button>
+    <section class="card" aria-labelledby="active-title" style="margin-bottom: var(--space-5)">
+      <div class="row between">
+        <div class="stack-sm">
+          <h2 id="active-title" class="eyebrow" style="color: var(--text-muted)">Active agent</h2>
+          <div id="activeAgent" aria-live="polite"><span class="skeleton" style="width: 220px; height: 22px"></span></div>
+        </div>
+        <button class="btn btn-sm" type="button" id="btnRefreshAll">Refresh all</button>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Agents</h2>
-      <div class="toolbar">
-        <button class="secondary" onclick="loadAgents()">Refresh Agents</button>
+    <div class="tabs" role="tablist" aria-label="Admin sections">
+      <button class="tab" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="true">Agents</button>
+      <button class="tab" role="tab" id="tab-templates" aria-controls="panel-templates" aria-selected="false" tabindex="-1">Templates</button>
+      <button class="tab" role="tab" id="tab-conversations" aria-controls="panel-conversations" aria-selected="false" tabindex="-1">Conversations</button>
+    </div>
+
+    <!-- Agents -->
+    <section id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" class="grid grid-main">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Agents</h2>
+            <p>Activate an agent to make it answer new calls.</p>
+          </div>
+          <button class="btn btn-sm" type="button" data-refresh="agents">Refresh</button>
+        </div>
+        <ul class="list scroll" id="agentList" aria-busy="true"></ul>
       </div>
-      <div class="list" id="agentList"></div>
-      <hr />
-      <h3>Create Agent</h3>
-      <label>Name</label>
-      <input id="agentName" placeholder="Example: Triage Agent v2" />
-      <label>Description</label>
-      <input id="agentDesc" placeholder="What this agent is for" />
-      <label>Template</label>
-      <select id="agentTemplate"></select>
-      <label>Agent Config (JSON overrides)</label>
-      <textarea id="agentConfig">{
+
+      <form class="card stack" id="agentForm" novalidate aria-labelledby="agent-form-title">
+        <h2 id="agent-form-title">Create agent</h2>
+        <div class="field">
+          <label for="agentName">Name <span aria-hidden="true">*</span></label>
+          <input class="input" id="agentName" required maxlength="120" placeholder="e.g. Triage agent v2" aria-describedby="agentName-error" />
+          <span class="field-error" id="agentName-error"></span>
+        </div>
+        <div class="field">
+          <label for="agentDesc">Description</label>
+          <input class="input" id="agentDesc" maxlength="240" placeholder="What this agent is for" />
+        </div>
+        <div class="field">
+          <label for="agentTemplate">Template <span aria-hidden="true">*</span></label>
+          <select class="select" id="agentTemplate" required aria-describedby="agentTemplate-error"></select>
+          <span class="field-error" id="agentTemplate-error"></span>
+        </div>
+        <div class="field">
+          <label for="agentConfig">Config overrides (JSON)</label>
+          <textarea class="textarea code" id="agentConfig" rows="12" spellcheck="false" aria-describedby="agentConfig-hint agentConfig-error">{
   "assistant_name": "Asha",
   "domain": "Emergency support",
   "tone": "empathetic and practical",
@@ -247,34 +104,111 @@ If unsure, offer human handover.</textarea>
   "max_tokens": 220,
   "similarity_threshold": 0.85
 }</textarea>
-      <div class="row">
-        <button onclick="createAgent()">Save Agent</button>
-      </div>
+          <span class="hint" id="agentConfig-hint">Values fill the template's <code>{{placeholders}}</code> and override its defaults.</span>
+          <span class="field-error" id="agentConfig-error"></span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="submit">Save agent</button>
+        </div>
+      </form>
     </section>
 
-    <section class="card full">
-      <h2>Conversation History</h2>
-      <div class="toolbar">
-        <button class="secondary" onclick="loadConversations()">Refresh History</button>
-      </div>
-      <div class="grid2">
-        <div>
-          <div class="list" id="conversationList"></div>
+    <!-- Templates -->
+    <section id="panel-templates" role="tabpanel" aria-labelledby="tab-templates" class="grid grid-main" hidden>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Templates</h2>
+            <p>Reusable system prompts with default settings.</p>
+          </div>
+          <button class="btn btn-sm" type="button" data-refresh="templates">Refresh</button>
         </div>
-        <div>
-          <div id="conversationDetail" class="muted">Select a conversation to inspect transcript and recordings.</div>
+        <ul class="list scroll" id="templateList" aria-busy="true"></ul>
+      </div>
+
+      <form class="card stack" id="templateForm" novalidate aria-labelledby="tpl-form-title">
+        <h2 id="tpl-form-title">Create template</h2>
+        <div class="field">
+          <label for="tplName">Name <span aria-hidden="true">*</span></label>
+          <input class="input" id="tplName" required maxlength="120" placeholder="e.g. Banking support" aria-describedby="tplName-error" />
+          <span class="field-error" id="tplName-error"></span>
+        </div>
+        <div class="field">
+          <label for="tplDesc">Description</label>
+          <input class="input" id="tplDesc" maxlength="240" placeholder="Purpose of this template" />
+        </div>
+        <div class="field">
+          <label for="tplDefaults">Defaults (JSON)</label>
+          <textarea class="textarea code" id="tplDefaults" rows="8" spellcheck="false" aria-describedby="tplDefaults-error">{
+  "assistant_name": "Asha",
+  "tone": "calm",
+  "objective": "Resolve in minimum turns",
+  "temperature": 0.6,
+  "max_tokens": 240,
+  "similarity_threshold": 0.85
+}</textarea>
+          <span class="field-error" id="tplDefaults-error"></span>
+        </div>
+        <div class="field">
+          <label for="tplPrompt">System prompt <span aria-hidden="true">*</span></label>
+          <textarea class="textarea code" id="tplPrompt" rows="7" required spellcheck="false" aria-describedby="tplPrompt-hint tplPrompt-error">You are {{assistant_name}}, a multilingual voice assistant for {{domain}}.
+Tone: {{tone}}.
+Objective: {{objective}}.
+Always respond in {{detected_language}} and keep answers short for speech.
+If unsure, offer human handover.</textarea>
+          <span class="hint" id="tplPrompt-hint">Use placeholders such as <code>{{assistant_name}}</code> and <code>{{detected_language}}</code>.</span>
+          <span class="field-error" id="tplPrompt-error"></span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="submit">Save template</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Conversations -->
+    <section id="panel-conversations" role="tabpanel" aria-labelledby="tab-conversations" class="grid grid-main" hidden>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Conversation history</h2>
+            <p>The 80 most recent conversations.</p>
+          </div>
+          <button class="btn btn-sm" type="button" data-refresh="conversations">Refresh</button>
+        </div>
+        <ul class="list scroll" id="conversationList" aria-busy="true"></ul>
+      </div>
+      <div class="card" id="conversationDetail" aria-live="polite">
+        <div class="empty-state">
+          <strong>No conversation selected</strong>
+          <span>Pick a conversation to see its transcript and recordings.</span>
         </div>
       </div>
     </section>
-  </div>
+  </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const esc = UI.escapeHtml;
 
-    function setStatus(msg, isError = false) {
-      const el = $("status");
-      el.textContent = msg;
-      el.style.background = isError ? "#b33a3a" : "#2f5d92";
+    function emptyState(title, text) {
+      return `<li class="empty-state"><strong>${esc(title)}</strong><span>${esc(text)}</span></li>`;
+    }
+
+    function errorState(text, retry) {
+      return `<li class="alert alert-error" role="alert"><div><p class="alert-title">Could not load</p><p>${esc(text)}</p>
+        <button class="btn btn-sm" type="button" data-refresh="${retry}" style="margin-top: var(--space-2)">Try again</button></div></li>`;
+    }
+
+    function skeletonItems(n = 3) {
+      return Array.from({ length: n }, () =>
+        '<li class="list-item" aria-hidden="true"><span class="skeleton" style="width:50%"></span><span class="skeleton" style="width:80%"></span></li>'
+      ).join("");
+    }
+
+    function formatDate(value) {
+      if (!value) return "n/a";
+      const d = new Date(String(value).replace(" ", "T") + (String(value).match(/Z|[+-]\d\d:?\d\d$/) ? "" : "Z"));
+      return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString();
     }
 
     async function api(url, options = {}) {
@@ -286,213 +220,363 @@ If unsure, offer human handover.</textarea>
       let body = {};
       try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
       if (!res.ok) {
-        throw new Error(body.error || body.message || `Request failed: ${res.status}`);
+        throw new Error(body.error || body.message || `Request failed (HTTP ${res.status})`);
       }
       return body;
     }
 
-    function parseJson(textareaId) {
-      const raw = $(textareaId).value.trim();
-      if (!raw) return {};
-      return JSON.parse(raw);
-    }
-
-    async function loadActiveAgent() {
-      const data = await api("/admin/active-agent");
-      if (!data.agent) {
-        $("activeAgent").innerHTML = `<p class="muted">No active agent selected.</p>`;
-        return;
+    // ---------- Form validation helpers ----------
+    function setFieldError(id, message) {
+      const input = $(id);
+      const err = $(`${id}-error`);
+      if (message) {
+        input.setAttribute("aria-invalid", "true");
+        if (err) err.textContent = message;
+      } else {
+        input.removeAttribute("aria-invalid");
+        if (err) err.textContent = "";
       }
-      const a = data.agent;
-      $("activeAgent").innerHTML = `
-        <div class="item">
-          <div class="title">Active Agent: ${a.name}<span class="badge">ACTIVE</span></div>
-          <small>Template: ${a.template_name || "None"}</small>
-          <small>ID: ${a.id}</small>
-          <small>Updated: ${a.updated_at}</small>
-        </div>
-      `;
+      return !message;
     }
 
+    function readJsonField(id) {
+      const raw = $(id).value.trim();
+      if (!raw) {
+        setFieldError(id, "");
+        return { ok: true, value: {} };
+      }
+      try {
+        const value = JSON.parse(raw);
+        if (value === null || typeof value !== "object" || Array.isArray(value)) {
+          setFieldError(id, "Enter a JSON object, for example {\"tone\": \"calm\"}.");
+          return { ok: false };
+        }
+        setFieldError(id, "");
+        return { ok: true, value };
+      } catch (err) {
+        setFieldError(id, `This is not valid JSON: ${err.message}`);
+        return { ok: false };
+      }
+    }
+
+    function requireText(id, label) {
+      return setFieldError(id, $(id).value.trim() ? "" : `${label} is required.`);
+    }
+
+    function focusFirstInvalid(form) {
+      const bad = form.querySelector('[aria-invalid="true"]');
+      if (bad) bad.focus();
+    }
+
+    async function withSubmitting(form, fn) {
+      const btn = form.querySelector('button[type="submit"]');
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Saving…';
+      try {
+        await fn();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+
+    // ---------- Active agent ----------
+    async function loadActiveAgent() {
+      const host = $("activeAgent");
+      try {
+        const data = await api("/admin/active-agent");
+        if (!data.agent) {
+          host.innerHTML = '<p class="muted">No active agent. Activate one in the Agents tab.</p>';
+          return;
+        }
+        const a = data.agent;
+        host.innerHTML = `
+          <p class="row"><strong style="font-size: var(--text-lg)">${esc(a.name)}</strong><span class="badge">Active</span></p>
+          <p class="meta">Template: ${esc(a.template_name || "none")} · ID ${esc(a.id)} · Updated ${esc(formatDate(a.updated_at))}</p>`;
+      } catch (err) {
+        host.innerHTML = `<p class="field-error">Could not load the active agent: ${esc(err.message)}</p>`;
+      }
+    }
+
+    // ---------- Templates ----------
     async function loadTemplates() {
-      const data = await api("/admin/templates");
       const list = $("templateList");
       const select = $("agentTemplate");
-      list.innerHTML = "";
-      select.innerHTML = "";
-
-      for (const t of data.templates || []) {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="title">${t.name} ${t.is_builtin ? '<span class="badge">BUILT-IN</span>' : ''}</div>
-          <div class="muted">${t.description || ""}</div>
-          <small>ID: ${t.id} | Updated: ${t.updated_at}</small>
-          <details>
-            <summary>View prompt + defaults</summary>
-            <pre>${escapeHtml(JSON.stringify(t.defaults, null, 2))}</pre>
-            <pre>${escapeHtml(t.system_prompt)}</pre>
-          </details>
-        `;
-        list.appendChild(div);
-
-        const opt = document.createElement("option");
-        opt.value = String(t.id);
-        opt.textContent = `${t.id} - ${t.name}`;
-        select.appendChild(opt);
-      }
-    }
-
-    async function createTemplate() {
+      list.setAttribute("aria-busy", "true");
+      list.innerHTML = skeletonItems();
       try {
-        const payload = {
-          name: $("tplName").value.trim(),
-          description: $("tplDesc").value.trim(),
-          defaults: parseJson("tplDefaults"),
-          system_prompt: $("tplPrompt").value,
-        };
-        await api("/admin/templates", { method: "POST", body: JSON.stringify(payload) });
-        setStatus("Template created.");
-        $("tplName").value = "";
-        $("tplDesc").value = "";
-        await loadTemplates();
+        const data = await api("/admin/templates");
+        const templates = data.templates || [];
+        const previous = select.value;
+        select.innerHTML = "";
+        if (!templates.length) {
+          list.innerHTML = emptyState("No templates yet", "Create one with the form.");
+          select.innerHTML = '<option value="">Create a template first</option>';
+          return;
+        }
+        list.innerHTML = templates.map((t) => `
+          <li class="list-item">
+            <div class="title">${esc(t.name)} ${t.is_builtin ? '<span class="badge neutral">Built-in</span>' : ""}</div>
+            ${t.description ? `<p class="muted small">${esc(t.description)}</p>` : ""}
+            <p class="meta">ID ${esc(t.id)} · Updated ${esc(formatDate(t.updated_at))}</p>
+            <details>
+              <summary>Prompt and defaults</summary>
+              <pre class="code">${esc(t.system_prompt)}</pre>
+              <pre class="code">${esc(JSON.stringify(t.defaults, null, 2))}</pre>
+            </details>
+          </li>`).join("");
+        for (const t of templates) {
+          const opt = document.createElement("option");
+          opt.value = String(t.id);
+          opt.textContent = t.name;
+          select.appendChild(opt);
+        }
+        if ([...select.options].some((o) => o.value === previous)) select.value = previous;
       } catch (err) {
-        setStatus(`Template create failed: ${err.message}`, true);
+        list.innerHTML = errorState(err.message, "templates");
+      } finally {
+        list.setAttribute("aria-busy", "false");
       }
     }
 
+    $("templateForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const okName = requireText("tplName", "Name");
+      const okPrompt = requireText("tplPrompt", "System prompt");
+      const defaults = readJsonField("tplDefaults");
+      if (!okName || !okPrompt || !defaults.ok) {
+        focusFirstInvalid(form);
+        return;
+      }
+      await withSubmitting(form, async () => {
+        try {
+          const payload = {
+            name: $("tplName").value.trim(),
+            description: $("tplDesc").value.trim(),
+            defaults: defaults.value,
+            system_prompt: $("tplPrompt").value,
+          };
+          await api("/admin/templates", { method: "POST", body: JSON.stringify(payload) });
+          UI.toast(`Template "${payload.name}" saved.`, "success");
+          $("tplName").value = "";
+          $("tplDesc").value = "";
+          await loadTemplates();
+        } catch (err) {
+          UI.toast(`Could not save the template: ${err.message}`, "error", 8000);
+        }
+      });
+    });
+
+    // ---------- Agents ----------
     async function loadAgents() {
-      const data = await api("/admin/agents");
       const list = $("agentList");
-      list.innerHTML = "";
-
-      for (const a of data.agents || []) {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="title">${a.name} ${a.is_active ? '<span class="badge">ACTIVE</span>' : ''}</div>
-          <div class="muted">${a.description || ""}</div>
-          <small>ID: ${a.id} | Template: ${a.template_name || "None"}</small>
-          <small>Updated: ${a.updated_at}</small>
-          <details>
-            <summary>Config</summary>
-            <pre>${escapeHtml(JSON.stringify(a.config || {}, null, 2))}</pre>
-          </details>
-        `;
-        const row = document.createElement("div");
-        row.className = "row";
-        const btn = document.createElement("button");
-        btn.className = "success";
-        btn.textContent = "Activate";
-        btn.onclick = () => activateAgent(a.id);
-        row.appendChild(btn);
-        div.appendChild(row);
-        list.appendChild(div);
-      }
-    }
-
-    async function createAgent() {
+      list.setAttribute("aria-busy", "true");
+      list.innerHTML = skeletonItems();
       try {
-        const payload = {
-          name: $("agentName").value.trim(),
-          description: $("agentDesc").value.trim(),
-          template_id: Number($("agentTemplate").value),
-          config: parseJson("agentConfig"),
-        };
-        await api("/admin/agents", { method: "POST", body: JSON.stringify(payload) });
-        setStatus("Agent created.");
-        $("agentName").value = "";
-        $("agentDesc").value = "";
-        await loadAgents();
-      } catch (err) {
-        setStatus(`Agent create failed: ${err.message}`, true);
-      }
-    }
-
-    async function activateAgent(agentId) {
-      try {
-        await api(`/admin/agents/${agentId}/activate`, { method: "POST" });
-        setStatus(`Activated agent ${agentId}.`);
-        await Promise.all([loadAgents(), loadActiveAgent()]);
-      } catch (err) {
-        setStatus(`Agent activation failed: ${err.message}`, true);
-      }
-    }
-
-    async function loadConversations() {
-      try {
-        const data = await api("/admin/conversations?limit=80");
-        const list = $("conversationList");
+        const data = await api("/admin/agents");
+        const agents = data.agents || [];
+        if (!agents.length) {
+          list.innerHTML = emptyState("No agents yet", "Create one with the form.");
+          return;
+        }
         list.innerHTML = "";
-        for (const c of data.conversations || []) {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.style.cursor = "pointer";
-          div.onclick = () => loadConversationDetail(c.id);
-          div.innerHTML = `
-            <div class="title">Conversation #${c.id}</div>
-            <small>Session: ${c.session_id} | Channel: ${c.channel}</small>
-            <small>Agent: ${c.agent_name || "n/a"} | Turns: ${c.turn_count}</small>
-            <small>Lang: ${c.language} | Updated: ${c.updated_at}</small>
-            <small>${escapeHtml(c.last_text || "")}</small>
-          `;
-          list.appendChild(div);
+        for (const a of agents) {
+          const li = document.createElement("li");
+          li.className = `list-item${a.is_active ? " active" : ""}`;
+          li.innerHTML = `
+            <div class="title">${esc(a.name)} ${a.is_active ? '<span class="badge">Active</span>' : ""}</div>
+            ${a.description ? `<p class="muted small">${esc(a.description)}</p>` : ""}
+            <p class="meta">ID ${esc(a.id)} · Template: ${esc(a.template_name || "none")} · Updated ${esc(formatDate(a.updated_at))}</p>
+            <details>
+              <summary>Config</summary>
+              <pre class="code">${esc(JSON.stringify(a.config || {}, null, 2))}</pre>
+            </details>`;
+          if (!a.is_active) {
+            const row = document.createElement("div");
+            row.className = "row";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-sm";
+            btn.textContent = "Activate";
+            btn.setAttribute("aria-label", `Activate ${a.name}`);
+            btn.addEventListener("click", () => activateAgent(a, btn));
+            row.appendChild(btn);
+            li.appendChild(row);
+          }
+          list.appendChild(li);
         }
       } catch (err) {
-        setStatus(`History load failed: ${err.message}`, true);
+        list.innerHTML = errorState(err.message, "agents");
+      } finally {
+        list.setAttribute("aria-busy", "false");
+      }
+    }
+
+    $("agentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const okName = requireText("agentName", "Name");
+      const okTpl = setFieldError("agentTemplate", $("agentTemplate").value ? "" : "Choose a template.");
+      const config = readJsonField("agentConfig");
+      if (!okName || !okTpl || !config.ok) {
+        focusFirstInvalid(form);
+        return;
+      }
+      await withSubmitting(form, async () => {
+        try {
+          const payload = {
+            name: $("agentName").value.trim(),
+            description: $("agentDesc").value.trim(),
+            template_id: Number($("agentTemplate").value),
+            config: config.value,
+          };
+          await api("/admin/agents", { method: "POST", body: JSON.stringify(payload) });
+          UI.toast(`Agent "${payload.name}" saved. Activate it to use it for calls.`, "success");
+          $("agentName").value = "";
+          $("agentDesc").value = "";
+          await loadAgents();
+        } catch (err) {
+          UI.toast(`Could not save the agent: ${err.message}`, "error", 8000);
+        }
+      });
+    });
+
+    async function activateAgent(agent, btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Activating…';
+      try {
+        await api(`/admin/agents/${agent.id}/activate`, { method: "POST" });
+        UI.toast(`"${agent.name}" now answers new calls.`, "success");
+        await Promise.all([loadAgents(), loadActiveAgent()]);
+      } catch (err) {
+        UI.toast(`Could not activate the agent: ${err.message}`, "error", 8000);
+        btn.disabled = false;
+        btn.textContent = "Activate";
+      }
+    }
+
+    // ---------- Conversations ----------
+    let selectedConversation = null;
+
+    async function loadConversations() {
+      const list = $("conversationList");
+      list.setAttribute("aria-busy", "true");
+      list.innerHTML = skeletonItems(4);
+      try {
+        const data = await api("/admin/conversations?limit=80");
+        const conversations = data.conversations || [];
+        if (!conversations.length) {
+          list.innerHTML = emptyState("No conversations yet", "Calls and push-to-talk turns appear here once someone talks to the agent.");
+          return;
+        }
+        list.innerHTML = "";
+        for (const c of conversations) {
+          const li = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "list-item";
+          btn.setAttribute("aria-pressed", String(selectedConversation === c.id));
+          btn.innerHTML = `
+            <span class="title">Conversation #${esc(c.id)} <span class="badge neutral">${esc(c.channel || "n/a")}</span></span>
+            <span class="meta">${esc(c.agent_name || "No agent")} · ${esc(c.turn_count)} turns · ${esc(c.language || "n/a")} · ${esc(formatDate(c.updated_at))}</span>
+            ${c.last_text ? `<span class="small muted">${esc(c.last_text)}</span>` : ""}`;
+          btn.addEventListener("click", () => {
+            selectedConversation = c.id;
+            list.querySelectorAll("button.list-item").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+            loadConversationDetail(c.id);
+          });
+          li.appendChild(btn);
+          list.appendChild(li);
+        }
+      } catch (err) {
+        list.innerHTML = errorState(err.message, "conversations");
+      } finally {
+        list.setAttribute("aria-busy", "false");
       }
     }
 
     async function loadConversationDetail(conversationId) {
+      const host = $("conversationDetail");
+      host.setAttribute("aria-busy", "true");
+      host.innerHTML = '<div class="stack-sm" aria-hidden="true"><span class="skeleton" style="width:40%;height:20px"></span><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:90%;height:60px"></span></div>';
       try {
         const data = await api(`/admin/conversations/${conversationId}`);
         const c = data.conversation;
-        const host = $("conversationDetail");
         const turnsHtml = (c.turns || []).map((t) => {
+          const isBot = t.role === "assistant";
           const audioHtml = t.audio_url
-            ? `<audio controls preload="none" src="${t.audio_url}"></audio>`
+            ? `<audio controls preload="none" src="${esc(t.audio_url)}" aria-label="${isBot ? "Agent" : "Caller"} audio"></audio>`
             : "";
           return `
-            <div class="turn ${t.role === 'assistant' ? 'assistant' : 'user'}">
-              <div><strong>${t.role.toUpperCase()}</strong> <span class="muted">${t.created_at}</span></div>
-              <div>${escapeHtml(t.text || "")}</div>
+            <div class="bubble ${isBot ? "bot" : "user"}">
+              <span class="who">${isBot ? "Agent" : esc(t.role === "user" ? "Caller" : t.role)}</span>
+              <div>${esc(t.text || "")}</div>
               ${audioHtml}
-            </div>
-          `;
+              <span class="meta">${esc(formatDate(t.created_at))}</span>
+            </div>`;
         }).join("");
 
         host.innerHTML = `
-          <h3>Conversation #${c.id}</h3>
-          <div class="muted">Session: ${c.session_id} | Channel: ${c.channel}</div>
-          <div class="muted">Agent: ${c.agent_name || "n/a"} | Language: ${c.language}</div>
-          <div class="muted">Created: ${c.created_at} | Updated: ${c.updated_at}</div>
-          <hr />
-          ${turnsHtml || '<div class="muted">No turns found.</div>'}
-        `;
+          <div class="card-head">
+            <div>
+              <h2>Conversation #${esc(c.id)}</h2>
+              <p>${esc(c.agent_name || "No agent")} · ${esc(c.channel)} · ${esc(c.language)}</p>
+            </div>
+          </div>
+          <p class="meta" style="margin-bottom: var(--space-3)">Session <span class="mono">${esc(c.session_id)}</span> · Started ${esc(formatDate(c.created_at))}</p>
+          <div class="chat" style="max-height: 560px">
+            ${turnsHtml || '<div class="empty-state"><strong>No turns recorded</strong></div>'}
+          </div>`;
       } catch (err) {
-        setStatus(`Conversation detail failed: ${err.message}`, true);
+        host.innerHTML = `<div class="alert alert-error" role="alert"><div><p class="alert-title">Could not load conversation #${esc(conversationId)}</p><p>${esc(err.message)}</p></div></div>`;
+      } finally {
+        host.setAttribute("aria-busy", "false");
       }
     }
 
-    function escapeHtml(text) {
-      const map = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-      };
-      return String(text).replace(/[&<>"']/g, (m) => map[m]);
+    // ---------- Tabs ----------
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function selectTab(tab, focus = true) {
+      for (const t of tabs) {
+        const selected = t === tab;
+        t.setAttribute("aria-selected", String(selected));
+        t.tabIndex = selected ? 0 : -1;
+        $(t.getAttribute("aria-controls")).hidden = !selected;
+      }
+      if (focus) tab.focus();
+      const name = tab.id.replace("tab-", "");
+      if (window.location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
     }
+    tabs.forEach((tab, i) => {
+      tab.addEventListener("click", () => selectTab(tab));
+      tab.addEventListener("keydown", (e) => {
+        let next = null;
+        if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
+        else if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
+        else if (e.key === "Home") next = tabs[0];
+        else if (e.key === "End") next = tabs[tabs.length - 1];
+        if (next) {
+          e.preventDefault();
+          selectTab(next);
+        }
+      });
+    });
+    const initialTab = $(`tab-${window.location.hash.slice(1)}`);
+    if (initialTab) selectTab(initialTab, false);
+
+    // ---------- Refresh wiring ----------
+    const loaders = { agents: loadAgents, templates: loadTemplates, conversations: loadConversations };
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-refresh]");
+      if (btn && loaders[btn.dataset.refresh]) loaders[btn.dataset.refresh]();
+    });
 
     async function boot() {
-      try {
-        await Promise.all([loadTemplates(), loadAgents(), loadConversations(), loadActiveAgent()]);
-        setStatus("Loaded admin data.");
-      } catch (err) {
-        setStatus(`Admin boot failed: ${err.message}`, true);
-      }
+      await Promise.all([loadTemplates(), loadAgents(), loadConversations(), loadActiveAgent()]);
     }
+    $("btnRefreshAll").addEventListener("click", boot);
 
     boot();
   </script>

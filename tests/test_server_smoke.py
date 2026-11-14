@@ -65,6 +65,39 @@ def test_ui_pages_served(client, path):
     assert b'name="viewport"' in resp.data
 
 
+@pytest.mark.parametrize("path", ["/", "/client", "/call", "/push-to-talk", "/lid-test", "/admin"])
+def test_ui_pages_share_design_system(client, path):
+    html = client.get(path).get_data(as_text=True)
+    assert '<html lang="en">' in html
+    assert 'href="/static/ui.css"' in html
+    assert 'src="/static/ui.js"' in html
+    assert 'rel="icon"' in html
+    assert 'name="description"' in html
+    assert 'id="main"' in html
+
+
+@pytest.mark.parametrize("asset", ["ui.css", "ui.js", "favicon.svg"])
+def test_static_assets_served(client, asset):
+    resp = client.get(f"/static/{asset}")
+    assert resp.status_code == 200
+    assert resp.data
+
+
+def test_favicon(client):
+    resp = client.get("/favicon.ico")
+    assert resp.status_code == 200
+    assert resp.mimetype == "image/svg+xml"
+
+
+def test_not_found_html_for_browsers_json_for_api(client):
+    html = client.get("/does-not-exist", headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"})
+    assert html.status_code == 404
+    assert b"This page does not exist" in html.data
+    api = client.get("/does-not-exist", headers={"Accept": "application/json"})
+    assert api.status_code == 404
+    assert api.get_json() == {"error": "Not found"}
+
+
 def test_ice_config_and_metrics(client):
     ice = client.get("/ice-config").get_json()
     assert ice["iceServers"] and all("urls" in s for s in ice["iceServers"])

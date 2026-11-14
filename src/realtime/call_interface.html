@@ -1,407 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Real-time multilingual voice call interface for the Indic voice AI agent." />
-  <title>AI Voice Call Interface</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  
-  <style>
-    :root {
-      --bg-dark: #0a0e1a;
-      --bg-card: #131824;
-      --bg-elevated: #1a2233;
-      --text-primary: #e8ecf5;
-      --text-secondary: #9ca3af;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --border: rgba(255, 255, 255, 0.08);
-      --glow: rgba(59, 130, 246, 0.3);
-      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 100%);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 900px;
-      width: 100%;
-    }
-
-    .card {
-      background: rgba(19, 24, 36, 0.8);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .status-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .status-pill {
-      padding: 12px 16px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .status-pill .label {
-      color: var(--text-secondary);
-    }
-
-    .status-pill .value {
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--text-secondary);
-    }
-
-    .dot.ok { background: var(--success); box-shadow: 0 0 10px var(--success); }
-    .dot.warn { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
-    .dot.bad { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px 16px;
-      background: var(--bg-dark);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text-primary);
-      font-size: 14px;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--glow);
-    }
-
-    .button-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      padding: 14px 28px;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    button.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      color: white;
-      flex: 1;
-    }
-
-    button.primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
-
-    button.danger {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      flex: 1;
-    }
-
-    button.secondary {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .waveform-container {
-      margin: 24px 0;
-      padding: 24px;
-      background: var(--bg-dark);
-      border-radius: 16px;
-      border: 1px solid var(--border);
-    }
-
-    .waveform-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    canvas {
-      width: 100%;
-      height: 80px;
-      border-radius: 8px;
-    }
-
-    .transcript {
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 16px;
-      background: var(--bg-dark);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .transcript-entry {
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .transcript-entry:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .transcript-time {
-      color: var(--text-secondary);
-      font-size: 10px;
-    }
-
-    .transcript-text {
-      color: var(--text-primary);
-      margin-top: 4px;
-    }
-
-    .alert {
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      display: none;
-    }
-
-    .alert.warning {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--warning);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    audio {
-      display: none;
-    }
-
-    @media (max-width: 640px) {
-      .card {
-        padding: 20px;
-      }
-
-      .status-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .button-row {
-        flex-direction: column;
-      }
-
-      button {
-        width: 100%;
-      }
-    }
-  </style>
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Voice AI Model" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/ui.css" />
+  <script>try{var t=localStorage.getItem("voiceai-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script src="/static/ui.js"></script>
+  <title>Voice call · Voice AI Model</title>
+  <meta name="description" content="Real-time multilingual voice call with the Indic voice AI agent over WebRTC, WebSocket or per-turn upload." />
+  <meta property="og:title" content="Voice call · Voice AI Model" />
+  <meta property="og:description" content="Real-time multilingual voice call with the Indic voice AI agent over WebRTC, WebSocket or per-turn upload." />
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎙️ AI Voice Call</h1>
-      <div class="subtitle">Real-time multilingual voice AI assistant</div>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M14 28v8M23 20v24M32 12v40M41 22v20M50 27v10"/></g></svg>
+        <span>Voice AI Model</span>
+      </a>
+      <nav class="app-nav" aria-label="Main">
+        <ul>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/call">Call</a></li>
+          <li><a href="/push-to-talk">Push to talk</a></li>
+          <li><a href="/client">Live client</a></li>
+          <li><a href="/lid-test">Language ID</a></li>
+          <li><a href="/admin">Admin</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-ghost btn-icon theme-toggle" type="button" data-theme-toggle aria-label="Toggle colour theme"></button>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <div class="page-head">
+      <span class="eyebrow">Voice call</span>
+      <h1>Call the voice agent</h1>
+      <p class="lead">Pick a language and a connection mode, then start the call and speak naturally.</p>
     </div>
 
-    <div class="card">
-      <div class="alert warning" id="micWarning">
-        ⚠️ Microphone access requires HTTPS or localhost. Please use a secure connection.
-      </div>
-
-      <div class="status-grid">
-        <div class="status-pill">
-          <span class="label">Server</span>
-          <span class="value">
-            <span class="dot" id="dotServer"></span>
-            <span id="statusServer">checking...</span>
-          </span>
+    <div class="grid grid-main">
+      <section class="card stack" aria-labelledby="setup-title">
+        <div class="card-head" style="margin-bottom: 0">
+          <h2 id="setup-title">Call setup</h2>
+          <div class="status-row" aria-label="Status">
+            <span class="pill" id="pillServer" data-state="busy"><span class="dot" aria-hidden="true"></span>Server: <strong data-value>checking</strong></span>
+            <span class="pill" id="pillConnection"><span class="dot" aria-hidden="true"></span>Link: <strong data-value>idle</strong></span>
+            <span class="pill" id="pillMic"><span class="dot" aria-hidden="true"></span>Mic: <strong data-value>off</strong></span>
+          </div>
         </div>
-        <div class="status-pill">
-          <span class="label">Connection</span>
-          <span class="value">
-            <span class="dot" id="dotConnection"></span>
-            <span id="statusConnection">idle</span>
-          </span>
+
+        <div class="alert alert-warning" id="micWarning" hidden>
+          <div>
+            <p class="alert-title">Microphone needs a secure page</p>
+            <p>Browsers only allow microphone access on HTTPS or <code>localhost</code>. Open this page over HTTPS or through an SSH tunnel (<code>ssh -L 8080:localhost:8080 &hellip;</code>).</p>
+          </div>
         </div>
-        <div class="status-pill">
-          <span class="label">Microphone</span>
-          <span class="value">
-            <span class="dot" id="dotMic"></span>
-            <span id="statusMic">off</span>
-          </span>
+
+        <div class="alert alert-error" id="callError" role="alert" hidden>
+          <div>
+            <p class="alert-title">Call problem</p>
+            <p id="callErrorText"></p>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label>Backend URL</label>
-        <input type="text" id="backendUrl" placeholder="http://localhost:8080 or http://<GPU_IP>:8080" />
-      </div>
-
-      <div class="form-group">
-        <label>Language</label>
-        <select id="language">
-          <option value="auto">Auto-detect (LID)</option>
-          <option value="eng">English</option>
-          <option value="hin">Hindi</option>
-          <option value="tel">Telugu</option>
-          <option value="tam">Tamil</option>
-          <option value="kan">Kannada</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Connection Mode</label>
-        <select id="connectionMode">
-          <option value="webrtc">WebRTC (low latency)</option>
-          <option value="ws">WebSocket (NAT-friendly)</option>
-          <option value="upload">Upload turn (most reliable)</option>
-        </select>
-      </div>
-
-      <div class="waveform-container">
-        <div class="waveform-label">Microphone Input</div>
-        <canvas id="waveform"></canvas>
-      </div>
-
-      <div class="button-row">
-        <button class="primary" id="btnStart">
-          <span>📞</span> Start Call
-        </button>
-        <button class="danger" id="btnStop" disabled>
-          <span>🔴</span> Hang Up
-        </button>
-        <button class="secondary" id="btnMute" disabled>
-          <span>🎤</span> Mute
-        </button>
-        <button class="secondary" id="btnSpeak" disabled>
-          <span>🗣️</span> Speak & Send
-        </button>
-      </div>
-    </div>
-
-    <div class="card">
-      <label>Conversation</label>
-      <div class="transcript" id="transcript">
-        <div style="color: var(--text-secondary); text-align: center;">
-          Start a call to begin conversation...
+        <div class="field">
+          <label for="backendUrl">Backend URL</label>
+          <input class="input" type="url" id="backendUrl" inputmode="url" autocomplete="url" spellcheck="false"
+            placeholder="http://localhost:8080" aria-describedby="backendUrl-hint backendUrl-error" />
+          <span class="hint" id="backendUrl-hint">Leave as this page's address unless the GPU server runs elsewhere.</span>
+          <span class="field-error" id="backendUrl-error"></span>
         </div>
-      </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="language">Language</label>
+            <select class="select" id="language">
+              <option value="auto">Auto-detect</option>
+              <option value="eng">English</option>
+              <option value="hin">Hindi</option>
+              <option value="tel">Telugu</option>
+              <option value="tam">Tamil</option>
+              <option value="kan">Kannada</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="connectionMode">Connection mode</label>
+            <select class="select" id="connectionMode" aria-describedby="mode-hint">
+              <option value="webrtc">WebRTC (lowest latency)</option>
+              <option value="ws">WebSocket (NAT-friendly)</option>
+              <option value="upload">Upload per turn (most reliable)</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint" id="mode-hint" aria-live="polite"></p>
+
+        <div class="field">
+          <span class="label" id="waveform-label">Microphone input</span>
+          <canvas id="waveform" class="waveform" role="img" aria-labelledby="waveform-label"></canvas>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnStart" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+            <span data-label>Start call</span>
+          </button>
+          <button class="btn btn-danger" id="btnStop" type="button" disabled>Hang up</button>
+          <button class="btn" id="btnMute" type="button" disabled aria-pressed="false">Mute</button>
+          <button class="btn" id="btnSpeak" type="button" disabled hidden>Speak &amp; send</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="conversation-title">
+        <div class="card-head">
+          <div>
+            <h2 id="conversation-title">Conversation</h2>
+            <p>Transcripts appear here in upload mode. In streaming modes you hear the reply directly.</p>
+          </div>
+        </div>
+        <div class="chat" id="transcript" role="log" aria-live="polite" aria-label="Conversation transcript">
+          <div class="empty-state" data-empty>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+            <strong>No conversation yet</strong>
+            <span>Start a call to begin.</span>
+          </div>
+        </div>
+      </section>
     </div>
 
     <audio id="remoteAudio" autoplay playsinline></audio>
-  </div>
+  </main>
 
   <script>
     // DOM elements
     const backendInput = document.getElementById('backendUrl');
     const languageSelect = document.getElementById('language');
     const modeSelect = document.getElementById('connectionMode');
+    const modeHint = document.getElementById('mode-hint');
     const btnStart = document.getElementById('btnStart');
     const btnStop = document.getElementById('btnStop');
     const btnMute = document.getElementById('btnMute');
     const btnSpeak = document.getElementById('btnSpeak');
-    const statusServer = document.getElementById('statusServer');
-    const statusConnection = document.getElementById('statusConnection');
-    const statusMic = document.getElementById('statusMic');
-    const dotServer = document.getElementById('dotServer');
-    const dotConnection = document.getElementById('dotConnection');
-    const dotMic = document.getElementById('dotMic');
+    const pillServer = document.getElementById('pillServer');
+    const pillConnection = document.getElementById('pillConnection');
+    const pillMic = document.getElementById('pillMic');
     const transcript = document.getElementById('transcript');
     const waveformCanvas = document.getElementById('waveform');
     const remoteAudio = document.getElementById('remoteAudio');
     const micWarning = document.getElementById('micWarning');
+    const callError = document.getElementById('callError');
+    const callErrorText = document.getElementById('callErrorText');
+
+    const MODE_HINTS = {
+      webrtc: 'Direct audio stream. Needs open UDP ports or a TURN server.',
+      ws: 'Streams audio over a WebSocket. Works through SSH tunnels and most proxies.',
+      upload: 'Press "Speak & send", talk, then press again. One request per turn; shows transcripts.'
+    };
 
     // State
     let pc = null;
@@ -422,45 +182,45 @@
     let turnInFlight = false;
     let turnSessionId = '';
 
-    // Configuration
-    const storedBackend = localStorage.getItem('backendUrl');
-    const defaultBackend = storedBackend || window.location.origin;
-    backendInput.value = defaultBackend;
-
-    function getBackendUrl() {
-      let url = backendInput.value.trim() || window.location.origin;
-      if (!/^https?:\/\//i.test(url)) {
-        url = `${window.location.protocol}//${url}`;
-      }
-      return url.replace(/\/+$/, '');
-    }
+    const getBackendUrl = UI.bindBackendInput(backendInput, 'backendUrl', () => checkServer());
 
     function getWsUrl() {
       return getBackendUrl().replace(/^http/i, 'ws');
     }
 
-    backendInput.addEventListener('change', () => {
-      const normalized = getBackendUrl();
-      backendInput.value = normalized;
-      localStorage.setItem('backendUrl', normalized);
-      checkServer();
-    });
+    function showError(message) {
+      callErrorText.textContent = message;
+      callError.hidden = false;
+    }
 
-    function setStatus(element, dot, text, state) {
-      element.textContent = text;
-      dot.className = `dot ${state}`;
+    function clearError() {
+      callError.hidden = true;
+      callErrorText.textContent = '';
+    }
+
+    function setStartBusy(busy) {
+      btnStart.querySelector('[data-label]').textContent = busy ? 'Connecting…' : 'Start call';
+      btnStart.setAttribute('aria-busy', String(busy));
+    }
+
+    function setSpeakLabel(text) {
+      btnSpeak.textContent = text;
     }
 
     function addTranscript(text, isUser = false) {
-      if (transcript.children[0]?.textContent.includes('Start a call')) {
-        transcript.innerHTML = '';
-      }
+      const empty = transcript.querySelector('[data-empty]');
+      if (empty) empty.remove();
       const entry = document.createElement('div');
-      entry.className = 'transcript-entry';
-      entry.innerHTML = `
-        <div class="transcript-time">${new Date().toLocaleTimeString()} - ${isUser ? 'You' : 'AI'}</div>
-        <div class="transcript-text">${text}</div>
-      `;
+      entry.className = `bubble ${isUser ? 'user' : 'bot'}`;
+      const who = document.createElement('span');
+      who.className = 'who';
+      who.textContent = isUser ? 'You' : 'Agent';
+      const body = document.createElement('div');
+      body.textContent = text;
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = new Date().toLocaleTimeString();
+      entry.append(who, body, meta);
       transcript.appendChild(entry);
       transcript.scrollTop = transcript.scrollHeight;
     }
@@ -470,12 +230,12 @@
         const res = await fetch(`${getBackendUrl()}/ready`);
         const data = await res.json();
         if (data.ready) {
-          setStatus(statusServer, dotServer, 'ready', 'ok');
+          UI.setPill(pillServer, 'ready', 'ok');
         } else {
-          setStatus(statusServer, dotServer, 'loading...', 'warn');
+          UI.setPill(pillServer, 'loading models', 'busy');
         }
       } catch (err) {
-        setStatus(statusServer, dotServer, 'offline', 'bad');
+        UI.setPill(pillServer, 'offline', 'bad');
       }
     }
 
@@ -485,7 +245,6 @@
         const data = await res.json();
         iceServers = data.iceServers;
       } catch (err) {
-        console.warn('Failed to load ICE config, using defaults', err);
         iceServers = [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' }
@@ -493,27 +252,27 @@
       }
     }
 
+    function waveColor() {
+      return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#0f766e';
+    }
+
     function setupWaveform() {
       if (!analyser) return;
-      
+
       const ctx = waveformCanvas.getContext('2d');
-      const width = waveformCanvas.width = waveformCanvas.offsetWidth * 2;
-      const height = waveformCanvas.height = 160;
+      const dpr = window.devicePixelRatio || 1;
+      const width = waveformCanvas.width = Math.max(1, waveformCanvas.offsetWidth * dpr);
+      const height = waveformCanvas.height = Math.max(1, waveformCanvas.offsetHeight * dpr);
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const color = waveColor();
 
       function draw() {
         animationFrame = requestAnimationFrame(draw);
         analyser.getByteTimeDomainData(dataArray);
 
-        ctx.fillStyle = 'rgba(10, 14, 26, 0.3)';
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.lineWidth = 3;
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        gradient.addColorStop(0, '#3b82f6');
-        gradient.addColorStop(0.5, '#8b5cf6');
-        gradient.addColorStop(1, '#ec4899');
-        ctx.strokeStyle = gradient;
+        ctx.clearRect(0, 0, width, height);
+        ctx.lineWidth = 2 * dpr;
+        ctx.strokeStyle = color;
 
         ctx.beginPath();
         const sliceWidth = width / dataArray.length;
@@ -522,13 +281,8 @@
         for (let i = 0; i < dataArray.length; i++) {
           const v = dataArray[i] / 128.0;
           const y = (v * height) / 2;
-
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
           x += sliceWidth;
         }
 
@@ -579,56 +333,66 @@
       await audioCtx.resume();
       remoteAudio.srcObject = null;
       remoteAudio.src = URL.createObjectURL(blob);
-      remoteAudio.play().catch((err) => console.warn('Audio playback failed:', err));
+      remoteAudio.play().catch(() => UI.toast('Tap the page to allow audio playback.', 'warning'));
+    }
+
+    async function getMic() {
+      if (!UI.micAvailable()) {
+        throw Object.assign(new Error('insecure'), { name: 'SecurityError' });
+      }
+      return navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+    }
+
+    function onCallStarted(speakEnabled) {
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnMute.disabled = false;
+      btnSpeak.disabled = !speakEnabled;
+      modeSelect.disabled = true;
+      languageSelect.disabled = true;
     }
 
     async function startUploadMode() {
-      setStatus(statusConnection, dotConnection, 'connecting...', 'warn');
+      UI.setPill(pillConnection, 'connecting', 'busy');
 
-      try {
-        if (typeof MediaRecorder === 'undefined') {
-          throw new Error('MediaRecorder is not available in this browser');
-        }
-
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        });
-        setStatus(statusMic, dotMic, 'live', 'ok');
-
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await audioCtx.resume();
-
-        micSource = audioCtx.createMediaStreamSource(localStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        micSource.connect(analyser);
-        setupWaveform();
-
-        turnSessionId = '';
-        turnInFlight = false;
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-        btnMute.disabled = false;
-        btnSpeak.disabled = false;
-        btnSpeak.innerHTML = '<span>🗣️</span> Speak & Send';
-        setStatus(statusConnection, dotConnection, 'connected', 'ok');
-      } catch (err) {
-        alert(`Failed to start upload mode: ${err.message}`);
-        stopCall();
+      if (typeof MediaRecorder === 'undefined') {
+        throw new Error('This browser cannot record audio (MediaRecorder is missing). Try a recent Chrome, Edge, Firefox or Safari.');
       }
+
+      localStream = await getMic();
+      UI.setPill(pillMic, 'live', 'ok');
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
+
+      micSource = audioCtx.createMediaStreamSource(localStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      micSource.connect(analyser);
+      setupWaveform();
+
+      turnSessionId = '';
+      turnInFlight = false;
+      onCallStarted(true);
+      setSpeakLabel('Speak & send');
+      UI.setPill(pillConnection, 'ready', 'ok');
+      btnSpeak.focus();
     }
 
     async function sendRecordedTurn(blob, mimeType) {
       if (!blob || blob.size < 1200) {
-        setStatus(statusConnection, dotConnection, 'audio too short', 'warn');
+        UI.setPill(pillConnection, 'audio too short', 'warn');
+        UI.toast('That recording was too short. Hold on a little longer and try again.', 'warning');
         btnSpeak.disabled = false;
-        btnSpeak.innerHTML = '<span>🗣️</span> Speak & Send';
+        setSpeakLabel('Speak & send');
         return;
       }
 
       turnInFlight = true;
       btnSpeak.disabled = true;
-      setStatus(statusConnection, dotConnection, 'processing...', 'warn');
+      UI.setPill(pillConnection, 'processing', 'busy');
 
       const language = languageSelect.value;
       const form = new FormData();
@@ -650,6 +414,7 @@
           throw new Error(data.error || `HTTP ${res.status}`);
         }
 
+        clearError();
         if (data.session_id) {
           turnSessionId = data.session_id;
         }
@@ -662,18 +427,16 @@
         if (data.audio_b64) {
           const responseBlob = base64ToBlob(data.audio_b64, data.audio_mime || 'audio/wav');
           await playResponseBlob(responseBlob);
-        } else {
-          console.warn('No audio returned for turn');
         }
 
-        setStatus(statusConnection, dotConnection, 'connected', 'ok');
+        UI.setPill(pillConnection, 'ready', 'ok');
       } catch (err) {
-        setStatus(statusConnection, dotConnection, 'error', 'bad');
-        alert(`Voice turn failed: ${err.message}`);
+        UI.setPill(pillConnection, 'error', 'bad');
+        showError(`The voice turn failed: ${UI.sentence(err.message)}`);
       } finally {
         turnInFlight = false;
         btnSpeak.disabled = false;
-        btnSpeak.innerHTML = '<span>🗣️</span> Speak & Send';
+        setSpeakLabel('Speak & send');
       }
     }
 
@@ -683,7 +446,8 @@
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
         btnSpeak.disabled = true;
-        btnSpeak.innerHTML = '<span>⏳</span> Uploading...';
+        btnSpeak.setAttribute('aria-pressed', 'false');
+        setSpeakLabel('Uploading…');
         return;
       }
 
@@ -708,93 +472,85 @@
       };
 
       mediaRecorder.start(200);
-      btnSpeak.innerHTML = '<span>⏹️</span> Stop & Send';
-      setStatus(statusConnection, dotConnection, 'listening...', 'warn');
+      btnSpeak.setAttribute('aria-pressed', 'true');
+      setSpeakLabel('Stop & send');
+      UI.setPill(pillConnection, 'listening', 'busy');
     }
 
     async function startWebRTC() {
       await loadIceConfig();
-      setStatus(statusConnection, dotConnection, 'connecting...', 'warn');
+      UI.setPill(pillConnection, 'connecting', 'busy');
 
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        });
-        setStatus(statusMic, dotMic, 'live', 'ok');
+      localStream = await getMic();
+      UI.setPill(pillMic, 'live', 'ok');
 
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        micSource = audioCtx.createMediaStreamSource(localStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        micSource.connect(analyser);
-        setupWaveform();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      micSource = audioCtx.createMediaStreamSource(localStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      micSource.connect(analyser);
+      setupWaveform();
 
-        pc = new RTCPeerConnection({ iceServers });
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      pc = new RTCPeerConnection({ iceServers });
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-        const remoteStream = new MediaStream();
-        pc.ontrack = (event) => {
-          remoteStream.addTrack(event.track);
-          remoteAudio.srcObject = remoteStream;
-          remoteAudio.play().catch(() => {});
-        };
+      const remoteStream = new MediaStream();
+      pc.ontrack = (event) => {
+        remoteStream.addTrack(event.track);
+        remoteAudio.srcObject = remoteStream;
+        remoteAudio.play().catch(() => {});
+      };
 
-        pc.onconnectionstatechange = () => {
-          const state = pc.connectionState;
-          if (state === 'connected') {
-            setStatus(statusConnection, dotConnection, 'connected', 'ok');
-          } else if (['failed', 'disconnected'].includes(state)) {
-            setStatus(statusConnection, dotConnection, state, 'bad');
-          } else {
-            setStatus(statusConnection, dotConnection, state, 'warn');
-          }
-        };
-
-        const offer = await pc.createOffer({ offerToReceiveAudio: true });
-        await pc.setLocalDescription(offer);
-
-        // Wait for ICE gathering
-        await new Promise(resolve => {
-          if (pc.iceGatheringState === 'complete') {
-            resolve();
-          } else {
-            pc.addEventListener('icegatheringstatechange', function check() {
-              if (pc.iceGatheringState === 'complete') {
-                pc.removeEventListener('icegatheringstatechange', check);
-                resolve();
-              }
-            });
-          }
-        });
-
-        const language = languageSelect.value;
-        const response = await fetch(`${getBackendUrl()}/offer`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sdp: pc.localDescription.sdp,
-            type: pc.localDescription.type,
-            language,
-            auto_detect: language === 'auto'
-          })
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Offer failed');
+      pc.onconnectionstatechange = () => {
+        if (!pc) return;
+        const state = pc.connectionState;
+        if (state === 'connected') {
+          UI.setPill(pillConnection, 'connected', 'ok');
+        } else if (['failed', 'disconnected'].includes(state)) {
+          UI.setPill(pillConnection, state, 'bad');
+          showError('The WebRTC connection dropped. Try WebSocket mode, or configure a TURN server if you are behind NAT.');
+        } else {
+          UI.setPill(pillConnection, state, 'busy');
         }
+      };
 
-        const answer = await response.json();
-        await pc.setRemoteDescription(answer);
+      const offer = await pc.createOffer({ offerToReceiveAudio: true });
+      await pc.setLocalDescription(offer);
 
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-        btnMute.disabled = false;
-        btnSpeak.disabled = true;
-      } catch (err) {
-        alert(`Failed to start WebRTC call: ${err.message}`);
-        stopCall();
+      // Wait for ICE gathering
+      await new Promise(resolve => {
+        if (pc.iceGatheringState === 'complete') {
+          resolve();
+        } else {
+          pc.addEventListener('icegatheringstatechange', function check() {
+            if (pc && pc.iceGatheringState === 'complete') {
+              pc.removeEventListener('icegatheringstatechange', check);
+              resolve();
+            }
+          });
+        }
+      });
+
+      const language = languageSelect.value;
+      const response = await fetch(`${getBackendUrl()}/offer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sdp: pc.localDescription.sdp,
+          type: pc.localDescription.type,
+          language,
+          auto_detect: language === 'auto'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `The server rejected the call (HTTP ${response.status}).`);
       }
+
+      const answer = await response.json();
+      await pc.setRemoteDescription(answer);
+      onCallStarted(false);
     }
 
     function downsampleBuffer(buffer, inputRate, outputRate) {
@@ -876,96 +632,96 @@
     }
 
     async function startWebSocket() {
-      setStatus(statusConnection, dotConnection, 'connecting...', 'warn');
+      UI.setPill(pillConnection, 'connecting', 'busy');
 
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        });
-        setStatus(statusMic, dotMic, 'live', 'ok');
+      localStream = await getMic();
+      UI.setPill(pillMic, 'live', 'ok');
 
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await audioCtx.resume();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
 
-        micSource = audioCtx.createMediaStreamSource(localStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        micSource.connect(analyser);
-        setupWaveform();
+      micSource = audioCtx.createMediaStreamSource(localStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      micSource.connect(analyser);
+      setupWaveform();
 
-        ws = new WebSocket(`${getWsUrl()}/media-stream`);
-        const language = languageSelect.value;
+      ws = new WebSocket(`${getWsUrl()}/media-stream`);
+      const language = languageSelect.value;
 
-        ws.onopen = () => {
-          setStatus(statusConnection, dotConnection, 'connected', 'ok');
-          ws.send(JSON.stringify({
-            event: 'start',
-            start: { customParameters: { language } }
-          }));
+      ws.onopen = () => {
+        UI.setPill(pillConnection, 'connected', 'ok');
+        ws.send(JSON.stringify({
+          event: 'start',
+          start: { customParameters: { language } }
+        }));
 
-          micProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
-          micSource.connect(micProcessor);
+        micProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+        micSource.connect(micProcessor);
 
-          micSink = audioCtx.createGain();
-          micSink.gain.value = 0;
-          micProcessor.connect(micSink);
-          micSink.connect(audioCtx.destination);
+        micSink = audioCtx.createGain();
+        micSink.gain.value = 0;
+        micProcessor.connect(micSink);
+        micSink.connect(audioCtx.destination);
 
-          micProcessor.onaudioprocess = (e) => {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            const input = e.inputBuffer.getChannelData(0);
-            const downsampled = downsampleBuffer(input, audioCtx.sampleRate, 8000);
-            for (let i = 0; i < downsampled.length; i++) {
-              sendBuffer.push(downsampled[i]);
-            }
-            while (sendBuffer.length >= 160) {
-              const frame = sendBuffer.slice(0, 160);
-              sendBuffer = sendBuffer.slice(160);
-              const payload = encodeMulawBase64(frame);
-              ws.send(JSON.stringify({ event: 'media', media: { payload } }));
-            }
-          };
-        };
-
-        ws.onmessage = (evt) => {
-          try {
-            const data = JSON.parse(evt.data);
-            if (data.event === 'media' && data.media?.payload) {
-              playMulawPayload(data.media.payload);
-            }
-          } catch (err) {
-            console.error('WebSocket message error:', err);
+        micProcessor.onaudioprocess = (e) => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+          const input = e.inputBuffer.getChannelData(0);
+          const downsampled = downsampleBuffer(input, audioCtx.sampleRate, 8000);
+          for (let i = 0; i < downsampled.length; i++) {
+            sendBuffer.push(downsampled[i]);
+          }
+          while (sendBuffer.length >= 160) {
+            const frame = sendBuffer.slice(0, 160);
+            sendBuffer = sendBuffer.slice(160);
+            const payload = encodeMulawBase64(frame);
+            ws.send(JSON.stringify({ event: 'media', media: { payload } }));
           }
         };
+      };
 
-        ws.onclose = () => {
-          setStatus(statusConnection, dotConnection, 'disconnected', 'bad');
-        };
+      ws.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          if (data.event === 'media' && data.media?.payload) {
+            playMulawPayload(data.media.payload);
+          }
+        } catch (err) {
+          // Ignore malformed frames.
+        }
+      };
 
-        ws.onerror = () => {
-          setStatus(statusConnection, dotConnection, 'error', 'bad');
-        };
+      ws.onclose = () => {
+        if (ws) {
+          UI.setPill(pillConnection, 'disconnected', 'bad');
+          showError('The WebSocket connection closed. Check that the server is reachable, then start the call again.');
+        }
+      };
 
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-        btnMute.disabled = false;
-        btnSpeak.disabled = true;
-      } catch (err) {
-        alert(`Failed to start WebSocket call: ${err.message}`);
-        stopCall();
-      }
+      ws.onerror = () => {
+        UI.setPill(pillConnection, 'error', 'bad');
+      };
+
+      onCallStarted(false);
     }
 
     function syncModeUI() {
       const uploadMode = modeSelect.value === 'upload';
-      btnSpeak.style.display = uploadMode ? 'flex' : 'none';
+      btnSpeak.hidden = !uploadMode;
+      modeHint.textContent = MODE_HINTS[modeSelect.value] || '';
       if (!uploadMode) {
         btnSpeak.disabled = true;
-        btnSpeak.innerHTML = '<span>🗣️</span> Speak & Send';
+        setSpeakLabel('Speak & send');
       }
     }
 
     async function startCall() {
+      clearError();
+      if (!UI.isValidBackendUrl(backendInput.value)) {
+        backendInput.focus();
+        showError('Enter a valid backend URL before starting the call.');
+        return;
+      }
       let mode = modeSelect.value;
 
       // WebRTC over localhost SSH tunnels is often unreliable because ICE
@@ -976,18 +732,30 @@
         if (mode === 'webrtc' && isLocalTunnel) {
           mode = 'ws';
           modeSelect.value = 'ws';
-          alert('Switched to WebSocket mode for localhost/SSH tunnel backend.');
+          syncModeUI();
+          UI.toast('Switched to WebSocket mode: WebRTC is unreliable through localhost tunnels.', 'info');
         }
       } catch (e) {
         // Keep selected mode if URL parsing fails.
       }
 
-      if (mode === 'webrtc') {
-        await startWebRTC();
-      } else if (mode === 'upload') {
-        await startUploadMode();
-      } else {
-        await startWebSocket();
+      btnStart.disabled = true;
+      setStartBusy(true);
+      try {
+        if (mode === 'webrtc') {
+          await startWebRTC();
+        } else if (mode === 'upload') {
+          await startUploadMode();
+        } else {
+          await startWebSocket();
+        }
+      } catch (err) {
+        const isMic = err && ['NotAllowedError', 'SecurityError', 'NotFoundError', 'NotReadableError', 'OverconstrainedError'].includes(err.name);
+        if (isMic) UI.setPill(pillMic, 'blocked', 'bad');
+        showError(isMic ? UI.describeMicError(err) : `Could not start the call: ${err.message}`);
+        stopCall();
+      } finally {
+        setStartBusy(false);
       }
     }
 
@@ -1007,17 +775,19 @@
       turnSessionId = '';
 
       if (pc) {
-        pc.getSenders().forEach(sender => sender.track?.stop());
-        pc.close();
+        const closing = pc;
         pc = null;
+        closing.getSenders().forEach(sender => sender.track?.stop());
+        closing.close();
       }
 
       if (ws) {
-        try {
-          ws.send(JSON.stringify({ event: 'stop' }));
-        } catch (e) {}
-        ws.close();
+        const closing = ws;
         ws = null;
+        try {
+          closing.send(JSON.stringify({ event: 'stop' }));
+        } catch (e) {}
+        closing.close();
       }
 
       if (micProcessor) {
@@ -1037,52 +807,55 @@
         localStream = null;
       }
 
-      if (analyser) {
-        analyser = null;
-      }
+      analyser = null;
 
       stopWaveform();
       remoteAudio.srcObject = null;
-      remoteAudio.src = '';
+      remoteAudio.removeAttribute('src');
 
-      setStatus(statusConnection, dotConnection, 'idle', '');
-      setStatus(statusMic, dotMic, 'off', '');
+      if (pillConnection.dataset.state !== 'bad') UI.setPill(pillConnection, 'idle', '');
+      if (pillMic.dataset.state !== 'bad') UI.setPill(pillMic, 'off', '');
       btnStart.disabled = false;
       btnStop.disabled = true;
       btnMute.disabled = true;
       btnSpeak.disabled = true;
-      btnSpeak.innerHTML = '<span>🗣️</span> Speak & Send';
+      btnSpeak.setAttribute('aria-pressed', 'false');
+      modeSelect.disabled = false;
+      languageSelect.disabled = false;
+      setSpeakLabel('Speak & send');
       micMuted = false;
-      btnMute.innerHTML = '<span>🎤</span> Mute';
+      btnMute.textContent = 'Mute';
+      btnMute.setAttribute('aria-pressed', 'false');
       syncModeUI();
+    }
+
+    function hangUp() {
+      stopCall();
+      UI.setPill(pillConnection, 'idle', '');
+      UI.setPill(pillMic, 'off', '');
+      btnStart.focus();
     }
 
     function toggleMute() {
       if (!localStream) return;
       micMuted = !micMuted;
       localStream.getAudioTracks().forEach(t => t.enabled = !micMuted);
-      btnMute.innerHTML = micMuted ? '<span>🔇</span> Unmute' : '<span>🎤</span> Mute';
-      setStatus(statusMic, dotMic, micMuted ? 'muted' : 'live', micMuted ? 'warn' : 'ok');
-    }
-
-    function showMicWarning() {
-      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-      if (window.location.protocol !== 'https:' && !isLocalhost) {
-        micWarning.style.display = 'block';
-      }
+      btnMute.textContent = micMuted ? 'Unmute' : 'Mute';
+      btnMute.setAttribute('aria-pressed', String(micMuted));
+      UI.setPill(pillMic, micMuted ? 'muted' : 'live', micMuted ? 'warn' : 'ok');
     }
 
     btnStart.addEventListener('click', startCall);
-    btnStop.addEventListener('click', stopCall);
+    btnStop.addEventListener('click', hangUp);
     btnMute.addEventListener('click', toggleMute);
     btnSpeak.addEventListener('click', toggleSpeakAndSend);
     modeSelect.addEventListener('change', syncModeUI);
     window.addEventListener('beforeunload', stopCall);
 
-    showMicWarning();
+    micWarning.hidden = UI.micAvailable();
     syncModeUI();
     checkServer();
-    setInterval(checkServer, 30000);
+    setInterval(() => { if (!document.hidden) checkServer(); }, 30000);
   </script>
 </body>
 </html>
